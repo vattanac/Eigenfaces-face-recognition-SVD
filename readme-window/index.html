@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eigenfaces — Windows Setup README</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Syne:wght@400;600;700;800&display=swap');
+
+:root {
+  --bg: #080b10;
+  --surface: #0d1117;
+  --card: #111820;
+  --border: #1e2d3d;
+  --border2: #243447;
+  --green: #3ddc84;
+  --green2: #00ffaa;
+  --blue: #58a6ff;
+  --yellow: #f0c040;
+  --red: #ff6b6b;
+  --purple: #bc8cff;
+  --text: #e6edf3;
+  --text2: #8b949e;
+  --text3: #6e7681;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Syne', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* ── GRID BACKGROUND ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(61,220,132,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(61,220,132,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 48px 32px 80px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── HEADER ── */
+.header {
+  margin-bottom: 48px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--border2);
+  position: relative;
+}
+
+.badge-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.badge {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid;
+}
+.badge-g { color: var(--green); border-color: var(--green); background: rgba(61,220,132,0.08); }
+.badge-b { color: var(--blue); border-color: var(--blue); background: rgba(88,166,255,0.08); }
+.badge-y { color: var(--yellow); border-color: var(--yellow); background: rgba(240,192,64,0.08); }
+
+h1 {
+  font-family: var(--sans);
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  margin-bottom: 12px;
+}
+
+h1 .accent { color: var(--green2); }
+h1 .dim { color: var(--text2); font-weight: 600; }
+
+.subtitle {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--text2);
+  font-weight: 400;
+}
+
+/* ── SECTIONS ── */
+.section { margin-bottom: 40px; }
+
+.section-title {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--border2), transparent);
+}
+
+h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+p {
+  font-size: 0.9rem;
+  color: var(--text2);
+  font-weight: 400;
+  margin-bottom: 10px;
+}
+
+/* ── STEP CARDS ── */
+.steps { display: flex; flex-direction: column; gap: 4px; }
+
+.step {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.step:hover { border-color: var(--border2); }
+
+.step-num {
+  background: rgba(61,220,132,0.07);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--green);
+  border-right: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.step-body { padding: 16px 20px; }
+
+.step-label {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 4px;
+}
+
+.step-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.step-note {
+  font-size: 0.78rem;
+  color: var(--text2);
+  font-weight: 400;
+  margin-bottom: 10px;
+  line-height: 1.55;
+}
+
+/* ── CODE BLOCKS ── */
+.code-block {
+  background: #010409;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--green);
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--green2);
+  position: relative;
+  overflow-x: auto;
+  white-space: pre;
+  margin-bottom: 6px;
+}
+
+.code-block .prompt {
+  color: var(--text3);
+  user-select: none;
+}
+
+.code-block .cmd { color: var(--green2); }
+.code-block .arg { color: var(--blue); }
+.code-block .comment { color: var(--text3); font-weight: 400; }
+.code-block .path { color: var(--yellow); }
+.code-block .out { color: var(--text2); }
+
+.copy-btn {
+  position: absolute;
+  top: 8px; right: 8px;
+  background: var(--border2);
+  border: none;
+  border-radius: 4px;
+  color: var(--text2);
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.copy-btn:hover { background: var(--green); color: #000; }
+.copy-btn.copied { background: var(--green); color: #000; }
+
+/* ── FILE TABLE ── */
+.file-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 0.82rem;
+}
+
+.file-table thead tr {
+  background: rgba(61,220,132,0.06);
+  border-bottom: 1px solid var(--border2);
+}
+
+.file-table th {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--green);
+  padding: 10px 16px;
+  text-align: left;
+}
+
+.file-table td {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.file-table tr:last-child td { border-bottom: none; }
+.file-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+.file-name {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--blue);
+}
+
+.file-role { color: var(--text2); font-weight: 400; font-size: 0.8rem; }
+
+.tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+}
+.tag-run { background: rgba(61,220,132,0.15); color: var(--green); }
+.tag-open { background: rgba(240,192,64,0.15); color: var(--yellow); }
+.tag-tmpl { background: rgba(88,166,255,0.15); color: var(--blue); }
+
+/* ── ALERT BOXES ── */
+.alert {
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.6;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.alert-icon { flex-shrink: 0; font-size: 1rem; margin-top: 1px; }
+.alert-green { background: rgba(61,220,132,0.07); border: 1px solid rgba(61,220,132,0.25); color: #9be6c0; }
+.alert-yellow { background: rgba(240,192,64,0.07); border: 1px solid rgba(240,192,64,0.25); color: #f5d78a; }
+.alert-red { background: rgba(255,107,107,0.07); border: 1px solid rgba(255,107,107,0.25); color: #ffaaaa; }
+
+.alert strong { color: var(--text); display: block; margin-bottom: 2px; }
+
+/* ── FLOW DIAGRAM ── */
+.flow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+  padding: 20px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.flow-box {
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.flow-box .fb-label {
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 6px;
+}
+
+.flow-box .fb-val {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.fb-py { color: var(--green); border-color: rgba(61,220,132,0.35); background: rgba(61,220,132,0.07); }
+.fb-sk { color: var(--purple); border-color: rgba(188,140,255,0.35); background: rgba(188,140,255,0.07); }
+.fb-jn { color: var(--yellow); border-color: rgba(240,192,64,0.35); background: rgba(240,192,64,0.07); }
+.fb-ht { color: var(--blue); border-color: rgba(88,166,255,0.35); background: rgba(88,166,255,0.07); }
+
+.flow-arrow {
+  font-family: var(--mono);
+  font-size: 1.1rem;
+  color: var(--border2);
+  padding: 0 10px;
+  flex-shrink: 0;
+  margin-top: 20px;
+}
+
+/* ── FEATURES GRID ── */
+.feat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.feat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  transition: border-color 0.2s;
+}
+.feat-card:hover { border-color: var(--border2); }
+
+.feat-icon {
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+}
+
+.feat-title {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.feat-desc {
+  font-size: 0.75rem;
+  color: var(--text2);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* ── FOOTER ── */
+.footer {
+  margin-top: 56px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: var(--text3);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="badge-row">
+      <span class="badge badge-g">Windows · Git Bash</span>
+      <span class="badge badge-b">sklearn PCA</span>
+      <span class="badge badge-y">Olivetti Faces</span>
+    </div>
+    <h1>
+      <span class="accent">Eigenfaces</span><br>
+      <span class="dim">Windows Setup README</span>
+    </h1>
+    <p class="subtitle">fetch_olivetti_faces() · PCA(n_components=50) · Real Face Data · HTML Visualization</p>
+  </header>
+
+  <!-- HOW IT WORKS -->
+  <div class="section">
+    <div class="section-title">How It Works</div>
+    <h2>Python → JSON → Browser</h2>
+    <p>sklearn runs on your machine, fetches the real AT&T Olivetti dataset, computes PCA, then bakes everything into a self-contained HTML file you open in any browser.</p>
+
+    <div class="flow">
+      <div class="flow-box"><div class="fb-label">You run</div><div class="fb-val fb-py">generate_eigenfaces.py</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box"><div class="fb-label">Downloads</div><div class="fb-val fb-sk">Olivetti 400 faces</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box"><div class="fb-label">Runs real</div><div class="fb-val fb-sk">sklearn PCA</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box"><div class="fb-label">Injects into</div><div class="fb-val fb-jn">template.html</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box"><div class="fb-label">You open</div><div class="fb-val fb-ht">eigenfaces_olivetti.html</div></div>
+    </div>
+  </div>
+
+  <!-- FILES -->
+  <div class="section">
+    <div class="section-title">Files</div>
+    <h2>Put All Files in One Folder</h2>
+    <p>Download everything and keep them together — the script looks for the template in the same directory.</p>
+    <table class="file-table">
+      <thead>
+        <tr>
+          <th>File</th>
+          <th>What It Is</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="file-name">generate_eigenfaces.py</div></td>
+          <td><div class="file-role">Python script — downloads real Olivetti data, runs sklearn PCA, builds the HTML</div></td>
+          <td><span class="tag tag-run">RUN THIS</span></td>
+        </tr>
+        <tr>
+          <td><div class="file-name">eigenfaces_template.html</div></td>
+          <td><div class="file-role">HTML shell with a <code style="color:var(--blue);font-family:var(--mono);font-size:0.72rem">/* __SKLEARN_DATA__ */</code> placeholder — script injects data here</div></td>
+          <td><span class="tag tag-tmpl">KEEP</span></td>
+        </tr>
+        <tr>
+          <td><div class="file-name">eigenfaces_sklearn.html</div></td>
+          <td><div class="file-role">Preview with simulated data — works right now without running anything</div></td>
+          <td><span class="tag tag-open">PREVIEW</span></td>
+        </tr>
+        <tr>
+          <td><div class="file-name">eigenfaces_olivetti.html</div></td>
+          <td><div class="file-role">Generated output — created by the script with real 400 Olivetti faces embedded</div></td>
+          <td><span class="tag tag-open">OPEN THIS</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- STEPS -->
+  <div class="section">
+    <div class="section-title">Setup Steps · Git Bash on Windows</div>
+
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-label">Prerequisite</div>
+          <div class="step-title">Check Python is installed</div>
+          <div class="step-note">Open Git Bash and verify Python works. You need Python 3.7 or higher.</div>
+          <div class="code-block"><span class="prompt">$ </span><span class="cmd">python --version</span>
+<span class="out">Python 3.11.x</span>
+
+<span class="comment"># If that fails, try:</span>
+<span class="prompt">$ </span><span class="cmd">python3 --version</span></div>
+          <div class="alert alert-yellow">
+            <span class="alert-icon">⚠</span>
+            <div>If Python is not installed, download it from <strong>python.org/downloads</strong> — check "Add Python to PATH" during install, then restart Git Bash.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-label">Navigate</div>
+          <div class="step-title">Go to the folder with your files</div>
+          <div class="step-note">Use the Git Bash path format — drive letter becomes <code style="color:var(--yellow);font-family:var(--mono)">/c/</code> instead of <code style="color:var(--yellow);font-family:var(--mono)">C:\</code></div>
+          <div class="code-block"><span class="comment"># Example — change to match where you saved the files:</span>
+<span class="prompt">$ </span><span class="cmd">cd</span> <span class="path">/c/Users/YourName/Downloads/eigenfaces</span>
+
+<span class="comment"># Verify all files are there:</span>
+<span class="prompt">$ </span><span class="cmd">ls</span>
+<span class="out">generate_eigenfaces.py  eigenfaces_template.html  eigenfaces_sklearn.html</span></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-label">Install</div>
+          <div class="step-title">Install Python packages</div>
+          <div class="step-note">Only needs to be done once. Pillow is optional — the script has a fallback if it's missing.</div>
+          <div class="code-block"><span class="prompt">$ </span><span class="cmd">pip install</span> <span class="arg">scikit-learn numpy pillow</span></div>
+          <div class="code-block"><span class="comment"># If pip is not found:</span>
+<span class="prompt">$ </span><span class="cmd">python -m pip install</span> <span class="arg">scikit-learn numpy pillow</span></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-label">Run</div>
+          <div class="step-title">Run the Python script</div>
+          <div class="step-note">This downloads the real Olivetti dataset (~5 MB from figshare.com), runs sklearn PCA, and generates the HTML. Takes about 15–30 seconds total.</div>
+          <div class="code-block"><span class="prompt">$ </span><span class="cmd">python</span> <span class="arg">generate_eigenfaces.py</span></div>
+          <div class="code-block"><span class="comment"># Expected output:</span>
+<span class="out">==============================================================
+  Eigenfaces: Real sklearn PCA + Olivetti Faces → HTML
+==============================================================
+
+[1/5] Fetching Olivetti faces dataset via sklearn...
+      X.shape = (400, 4096)
+[2/5] Running PCA(n_components=50).fit(X)...
+[3/5] Downsampling 64×64 → 32×32...
+[4/5] Encoding to base64...
+[5/5] Building eigenfaces_olivetti.html...
+
+==============================================================
+  ✓  eigenfaces_olivetti.html  (2100 KB)
+==============================================================</span></div>
+          <div class="alert alert-green">
+            <span class="alert-icon">✓</span>
+            <div><strong>Success!</strong> eigenfaces_olivetti.html will appear in the same folder. This file has the real 400 Olivetti faces embedded — no internet needed to open it.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-label">Open</div>
+          <div class="step-title">Open the result in your browser</div>
+          <div class="step-note">The generated HTML is fully self-contained — no server, no dependencies, just open it.</div>
+          <div class="code-block"><span class="prompt">$ </span><span class="cmd">start</span> <span class="path">eigenfaces_olivetti.html</span></div>
+          <div class="code-block"><span class="comment"># Or double-click the file in Windows Explorer</span>
+<span class="comment"># Or drag it into Chrome / Firefox</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TROUBLESHOOTING -->
+  <div class="section">
+    <div class="section-title">Troubleshooting</div>
+    <h2>Common Errors on Windows Git Bash</h2>
+
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+
+      <div class="alert alert-yellow">
+        <span class="alert-icon">⚠</span>
+        <div>
+          <strong>'python' is not recognized</strong>
+          Try <code style="font-family:var(--mono);color:var(--green2)">python3</code> instead of <code style="font-family:var(--mono);color:var(--green2)">python</code>, or reinstall Python and check "Add to PATH".
+        </div>
+      </div>
+
+      <div class="alert alert-yellow">
+        <span class="alert-icon">⚠</span>
+        <div>
+          <strong>'pip' is not recognized</strong>
+          Run <code style="font-family:var(--mono);color:var(--green2)">python -m pip install scikit-learn numpy pillow</code> instead.
+        </div>
+      </div>
+
+      <div class="alert alert-red">
+        <span class="alert-icon">✗</span>
+        <div>
+          <strong>Download error / URLError / figshare blocked</strong>
+          Your network is blocking figshare.com. Try a different network, mobile hotspot, or VPN. The script only needs internet for step [1/5] — the download is ~5 MB.
+        </div>
+      </div>
+
+      <div class="alert alert-yellow">
+        <span class="alert-icon">⚠</span>
+        <div>
+          <strong>eigenfaces_template.html not found</strong>
+          The script must be in the same folder as the template. Run <code style="font-family:var(--mono);color:var(--green2)">ls</code> to confirm both files are present.
+        </div>
+      </div>
+
+      <div class="alert alert-yellow">
+        <span class="alert-icon">⚠</span>
+        <div>
+          <strong>Pillow not found / ImportError</strong>
+          Pillow is optional. The script will use a numpy fallback automatically. Just re-run — it will still work.
+        </div>
+      </div>
+
+      <div class="alert alert-green">
+        <span class="alert-icon">ℹ</span>
+        <div>
+          <strong>Want to preview before running anything?</strong>
+          Open <code style="font-family:var(--mono);color:var(--green2)">eigenfaces_sklearn.html</code> right now — it works with simulated data and shows the full interface.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <div class="section">
+    <div class="section-title">What You Get</div>
+    <h2>5-Step Interactive Visualization</h2>
+    <p style="margin-bottom:16px">All running in the browser — no Python, no server needed after generation.</p>
+    <div class="feat-grid">
+      <div class="feat-card">
+        <div class="feat-icon">🖼</div>
+        <div class="feat-title">Step 1 — Dataset</div>
+        <div class="feat-desc">All 40 identity cards (click to select query face) + full 400-face gallery from the real AT&T Olivetti dataset.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">📊</div>
+        <div class="feat-title">Step 2 — SVD</div>
+        <div class="feat-desc">Real mean face from pca.mean_ + singular value bar chart from actual sklearn explained_variance_.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">👁</div>
+        <div class="feat-title">Step 3 — Eigenfaces</div>
+        <div class="feat-desc">Cumulative variance curve with 90% marker + all k eigenface thumbnails from pca.components_.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🔁</div>
+        <div class="feat-title">Step 4 — Reconstruct</div>
+        <div class="feat-desc">Original vs reconstructed pairs using pca.inverse_transform(). Adjust k slider to see quality change.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🎯</div>
+        <div class="feat-title">Step 5 — Recognize</div>
+        <div class="feat-desc">Noisy query → nearest neighbor in sklearn eigenspace → top-8 L2 distances shown live.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🎛</div>
+        <div class="feat-title">Controls</div>
+        <div class="feat-desc">k slider (1–50 components), noise slider (0–60%), click any person to set as query, New Query button.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <span>Eigenfaces · sklearn PCA · Olivetti Faces · MSDE Cohort 4</span>
+    <span>Windows · Git Bash Setup Guide</span>
+  </footer>
+
+</div>
+
+<script>
+// Copy button functionality
+document.querySelectorAll('.code-block').forEach(block => {
+  const btn = document.createElement('button');
+  btn.className = 'copy-btn';
+  btn.textContent = 'COPY';
+  block.appendChild(btn);
+  btn.addEventListener('click', () => {
+    // Get text without the prompt characters
+    const lines = block.innerText.split('\n')
+      .filter(l => !l.startsWith('#') && l.trim())
+      .map(l => l.replace(/^\$ /, '').trim())
+      .filter(l => l && !l.startsWith('Python') && !l.match(/^\[/));
+    navigator.clipboard.writeText(lines[0] || block.innerText).then(() => {
+      btn.textContent = 'COPIED!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 1500);
+    });
+  });
+});
+</script>
+</body>
+</html>

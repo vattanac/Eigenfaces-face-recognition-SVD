@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eigenfaces — Real sklearn PCA · Olivetti Faces</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;600;700&display=swap');
+:root {
+  --bg:#07070f; --panel:#0c0c18; --card:#101020; --border:#1c1c34; --border2:#242444;
+  --green:#00ffcc; --red:#ff4466; --blue:#4d9fff; --yellow:#ffcc00; --purple:#aa88ff;
+  --text:#ffffff; --text2:#c8d8ff; --muted:#7788aa;
+  --mono:'IBM Plex Mono',monospace; --sans:'IBM Plex Sans',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:600;min-height:100vh}
+
+/* ── HEADER ─────────────────────────────────────────────────── */
+.hdr{padding:28px 40px 22px;border-bottom:1px solid var(--border2);position:relative;
+  background:linear-gradient(160deg,rgba(0,255,204,0.06) 0%,rgba(77,159,255,0.04) 50%,transparent 100%)}
+.hdr::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--green),var(--blue),transparent);opacity:.3}
+.hdr-inner{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;max-width:1400px}
+.eyebrow{font-family:var(--mono);font-size:.58rem;font-weight:700;letter-spacing:.2em;
+  color:var(--green);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.eyebrow::before{content:'';width:16px;height:2px;background:var(--green);display:inline-block}
+h1{font-family:var(--mono);font-size:clamp(1.4rem,3vw,2.4rem);font-weight:700;letter-spacing:-.02em;line-height:1.1}
+h1 em{font-style:normal;color:var(--green);text-shadow:0 0 20px rgba(0,255,204,.3)}
+.sub{font-size:.8rem;font-weight:400;color:var(--text2);margin-top:8px;max-width:580px;line-height:1.65}
+.badges{display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0}
+.badge{font-family:var(--mono);font-size:.56rem;font-weight:700;letter-spacing:.09em;
+  text-transform:uppercase;padding:4px 10px;border-radius:2px;border:1px solid}
+.bg{color:var(--green);border-color:var(--green);background:rgba(0,255,204,.07)}
+.bb{color:var(--blue);border-color:var(--blue);background:rgba(77,159,255,.07)}
+.bp{color:var(--purple);border-color:var(--purple);background:rgba(170,136,255,.07)}
+
+/* ── PIPELINE ────────────────────────────────────────────────── */
+.pipe{display:flex;border-bottom:1px solid var(--border2);overflow-x:auto}
+.ps{flex:1;min-width:155px;padding:13px 16px;border-right:1px solid var(--border);
+  display:flex;align-items:center;gap:11px;cursor:pointer;transition:background .15s;position:relative}
+.ps:last-child{border-right:none}
+.ps:hover,.ps.on{background:rgba(0,255,204,.04)}
+.ps.on::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--green)}
+.pnum{font-family:var(--mono);font-size:1.2rem;font-weight:700;color:var(--border2);
+  line-height:1;transition:color .15s;min-width:22px}
+.ps.on .pnum,.ps:hover .pnum{color:var(--green)}
+.ptxt .pt{font-family:var(--mono);font-size:.62rem;font-weight:700;
+  color:var(--text);text-transform:uppercase;letter-spacing:.05em}
+.ptxt .pd{font-size:.57rem;font-weight:400;color:var(--muted);margin-top:2px}
+
+/* ── LAYOUT ─────────────────────────────────────────────────── */
+.layout{display:grid;grid-template-columns:268px 1fr;min-height:calc(100vh - 178px)}
+
+/* ── SIDEBAR ─────────────────────────────────────────────────── */
+.sb{border-right:1px solid var(--border2);padding:20px 16px;display:flex;flex-direction:column;gap:18px;overflow-y:auto}
+.sbl{font-family:var(--mono);font-size:.52rem;font-weight:700;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--green);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+.cr{margin-bottom:10px}
+.cl{font-family:var(--mono);font-size:.6rem;font-weight:700;color:var(--text);
+  display:flex;justify-content:space-between;margin-bottom:4px}
+.cl .v{color:var(--yellow)}
+input[type=range]{width:100%;-webkit-appearance:none;height:3px;background:var(--border2);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;
+  background:var(--yellow);border-radius:50%;cursor:pointer;box-shadow:0 0 7px rgba(255,204,0,.4)}
+.btn{width:100%;padding:10px 14px;border:none;border-radius:3px;font-family:var(--mono);
+  font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .18s}
+.btn-g{background:var(--green);color:#000}
+.btn-g:hover{box-shadow:0 0 18px rgba(0,255,204,.4);transform:translateY(-1px)}
+.btn-b{background:transparent;color:var(--blue);border:1px solid var(--blue);margin-top:6px}
+.btn-b:hover{background:rgba(77,159,255,.1)}
+.btn-r{background:transparent;color:var(--red);border:1px solid var(--red);margin-top:6px}
+.btn-r:hover{background:rgba(255,68,102,.1)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:3px;padding:7px 8px;text-align:center}
+.sc .v{font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--yellow);line-height:1}
+.sc .l{font-size:.5rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-top:3px}
+.vbar{margin-top:8px;background:var(--border);height:4px;border-radius:2px;overflow:hidden}
+.vfill{height:100%;background:linear-gradient(90deg,var(--green),var(--blue));transition:width .5s;width:0}
+.vtxt{font-family:var(--mono);font-size:.56rem;font-weight:700;color:var(--text2);margin-top:4px}
+
+/* sklearn code box */
+.codebox{background:#04040e;border:1px solid var(--border2);border-left:3px solid var(--blue);
+  border-radius:3px;padding:11px 13px;font-family:var(--mono);font-size:.57rem;font-weight:500;
+  line-height:1.95;color:var(--text2);white-space:pre;overflow-x:auto}
+.kw{color:var(--blue);font-weight:700}.fn{color:var(--green)}.cm{color:var(--muted)}.st{color:var(--yellow)}.num{color:#ff9966}
+
+/* ── MAIN CONTENT ────────────────────────────────────────────── */
+.cnt{padding:22px 28px;overflow-y:auto}
+.panel{display:none}.panel.on{display:block}
+.ptl{font-family:var(--mono);font-size:.56rem;font-weight:700;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--green);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.ptl::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent)}
+
+/* info banner */
+.info-banner{background:rgba(0,255,204,.05);border:1px solid rgba(0,255,204,.2);border-radius:4px;
+  padding:10px 14px;font-family:var(--mono);font-size:.6rem;font-weight:700;color:var(--text2);
+  margin-bottom:14px;line-height:1.8}
+.info-banner .hl{color:var(--green)}
+
+/* sklearn flow diagram */
+.flow{display:flex;align-items:center;gap:0;flex-wrap:wrap;margin-bottom:18px;
+  background:var(--card);border:1px solid var(--border2);border-radius:5px;padding:14px 16px}
+.fbox{text-align:center;padding:8px 12px}
+.fbox .fc{font-family:var(--mono);font-size:.58rem;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.fbox .fv{font-family:var(--mono);font-size:.9rem;font-weight:700;line-height:1}
+.farr{font-family:var(--mono);font-size:1.2rem;color:var(--border2);padding:0 4px}
+
+/* gallery */
+.gallery{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:14px}
+.gcell{background:var(--card);border:1px solid var(--border);border-radius:2px;
+  overflow:hidden;cursor:default;transition:all .15s;position:relative}
+.gcell:hover{border-color:var(--green);transform:scale(1.12);z-index:10}
+.gcell canvas{display:block;image-rendering:pixelated}
+.gcell .glbl{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.8);
+  font-family:var(--mono);font-size:7px;font-weight:700;color:var(--yellow);
+  text-align:center;opacity:0;transition:opacity .15s;line-height:1.6}
+.gcell:hover .glbl{opacity:1}
+
+/* person overview grid */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,62px);gap:5px;margin-bottom:14px}
+.pcard{background:var(--card);border:1px solid var(--border);border-radius:4px;
+  padding:5px;text-align:center;cursor:pointer;transition:all .15s}
+.pcard:hover,.pcard.sel{border-color:var(--green);background:rgba(0,255,204,.05)}
+.pcard canvas{display:block;image-rendering:pixelated;margin:0 auto}
+.pcard .pid{font-family:var(--mono);font-size:.48rem;font-weight:700;color:var(--muted);margin-top:3px}
+.pcard.sel .pid{color:var(--green)}
+
+/* eigenface grid */
+.efgrid{display:flex;flex-wrap:wrap;gap:7px}
+.efcard{background:var(--card);border:1px solid var(--border);border-radius:4px;
+  padding:8px;text-align:center;transition:all .18s;cursor:default}
+.efcard:hover{border-color:var(--green);box-shadow:0 0 12px rgba(0,255,204,.15)}
+.efcard canvas{display:block;image-rendering:pixelated}
+.efcap{font-family:var(--mono);font-size:.52rem;font-weight:700;color:var(--text2);
+  text-transform:uppercase;margin-top:5px;line-height:1.5}
+.efcap span{color:var(--yellow)}
+
+/* charts */
+.chartbox{background:var(--card);border:1px solid var(--border2);border-radius:4px;
+  padding:12px;margin-bottom:12px}
+.chartbox canvas{display:block;width:100%}
+.chtit{font-family:var(--mono);font-size:.56rem;font-weight:700;color:var(--text2);
+  margin-bottom:8px;text-transform:uppercase;letter-spacing:.1em}
+
+/* reconstruction */
+.reconrow{display:flex;flex-wrap:wrap;gap:8px}
+.reccard{background:var(--card);border:1px solid var(--border);border-radius:4px;
+  padding:8px;display:flex;flex-direction:column;align-items:center;gap:4px;transition:border-color .15s}
+.reccard:hover{border-color:rgba(0,255,204,.4)}
+.recpair{display:flex;gap:3px;align-items:center}
+.reclbl{font-family:var(--mono);font-size:.5rem;font-weight:700;color:var(--muted);text-transform:uppercase}
+
+/* SVD equation */
+.svdeq{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  background:var(--card);border:1px solid var(--border2);border-radius:5px;
+  padding:14px 20px;margin-bottom:16px}
+.svdl{font-family:var(--mono);font-size:1.7rem;font-weight:700;line-height:1}
+.svds{font-family:var(--mono);font-size:.53rem;color:var(--muted);font-weight:700;margin-top:3px}
+.svdop{font-family:var(--mono);font-size:1.4rem;color:var(--text2)}
+
+/* recognition */
+.recoglayout{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start;flex-wrap:wrap}
+.qcol{display:flex;flex-direction:column;gap:7px;align-items:center}
+.qcol canvas{display:block;image-rendering:pixelated;border:2px solid var(--red);border-radius:3px}
+.matchcard{background:var(--card);border:1px solid var(--border2);border-radius:5px;
+  padding:14px 18px;display:flex;gap:16px;align-items:center;margin-bottom:12px}
+.mscore{font-family:var(--mono);font-size:1.9rem;font-weight:700;line-height:1;min-width:64px}
+.mscore.ok{color:var(--green);text-shadow:0 0 14px rgba(0,255,204,.35)}
+.mscore.bad{color:var(--red);text-shadow:0 0 14px rgba(255,68,102,.3)}
+.mdet h3{font-family:var(--mono);font-size:.84rem;font-weight:700;color:var(--text)}
+.mdet p{font-size:.63rem;font-weight:600;color:var(--text2);margin-top:3px}
+.distlist{display:flex;flex-direction:column;gap:4px}
+.distrow{display:flex;align-items:center;gap:7px}
+.dname{font-family:var(--mono);font-size:.55rem;font-weight:700;color:var(--text2);width:68px}
+.dtrack{flex:1;height:6px;background:var(--border2);border-radius:3px;overflow:hidden}
+.dfill{height:100%;border-radius:3px;transition:width .5s}
+.dval{font-family:var(--mono);font-size:.55rem;font-weight:700;color:var(--text);width:44px;text-align:right}
+
+/* desc grid */
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:12px}
+.ditem{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--blue);
+  border-radius:3px;padding:10px 12px;font-size:.64rem;font-weight:600;line-height:1.6;color:var(--text2)}
+.ditem strong{color:var(--text);display:block;margin-bottom:2px;
+  font-family:var(--mono);font-size:.57rem;text-transform:uppercase;letter-spacing:.07em}
+
+/* chips */
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{background:var(--card);border:1px solid var(--border2);border-radius:3px;
+  padding:4px 9px;font-family:var(--mono);font-size:.56rem;font-weight:700;color:var(--text2);line-height:1.5}
+.chip .k{color:var(--green)}.chip .v{color:var(--yellow)}
+
+/* loading */
+.lov{display:none;position:fixed;inset:0;background:rgba(7,7,15,.94);z-index:1000;
+  align-items:center;justify-content:center;flex-direction:column;gap:12px}
+.lov.show{display:flex}
+.ltit{font-family:var(--mono);font-size:.72rem;font-weight:700;color:var(--green);
+  letter-spacing:.1em;text-transform:uppercase}
+.lbarw{width:220px;height:4px;background:var(--border2);border-radius:2px;overflow:hidden}
+.lbar{height:100%;background:linear-gradient(90deg,var(--green),var(--blue));width:0;transition:width .3s}
+.lsub{font-family:var(--mono);font-size:.56rem;font-weight:700;color:var(--muted)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:26px;height:26px;border:3px solid var(--border2);
+  border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite}
+</style>
+</head>
+<body>
+
+<div class="lov" id="lov">
+  <div class="spinner"></div>
+  <div class="ltit" id="ltit">Loading sklearn Results…</div>
+  <div class="lbarw"><div class="lbar" id="lbar"></div></div>
+  <div class="lsub" id="lsub">Decoding PCA output</div>
+</div>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-inner">
+    <div>
+      <div class="eyebrow">sklearn · PCA · Olivetti Faces AT&amp;T Dataset · 400 images · 40 identities</div>
+      <h1><em>Eigenfaces</em> — Real sklearn PCA</h1>
+      <p class="sub">
+        Actual <code style="color:var(--green);font-family:var(--mono)">sklearn.decomposition.PCA</code> run on the real
+        <code style="color:var(--blue);font-family:var(--mono)">fetch_olivetti_faces()</code> dataset.
+        Results embedded directly — 400 real faces, 40 people × 10 images,
+        PCA eigenfaces, projections and variance all from sklearn.
+      </p>
+    </div>
+    <div class="badges">
+      <div class="badge bg">sklearn PCA</div>
+      <div class="badge bb">Olivetti Faces</div>
+      <div class="badge bp">Real SVD Results</div>
+    </div>
+  </div>
+</header>
+
+<!-- PIPELINE -->
+<div class="pipe">
+  <div class="ps on" data-s="0"><div class="pnum">1</div><div class="ptxt"><div class="pt">Dataset</div><div class="pd">fetch_olivetti_faces()</div></div></div>
+  <div class="ps" data-s="1"><div class="pnum">2</div><div class="ptxt"><div class="pt">PCA / SVD</div><div class="pd">PCA(n_components=k).fit(X)</div></div></div>
+  <div class="ps" data-s="2"><div class="pnum">3</div><div class="ptxt"><div class="pt">Eigenfaces</div><div class="pd">pca.components_</div></div></div>
+  <div class="ps" data-s="3"><div class="pnum">4</div><div class="ptxt"><div class="pt">Reconstruct</div><div class="pd">pca.inverse_transform(w)</div></div></div>
+  <div class="ps" data-s="4"><div class="pnum">5</div><div class="ptxt"><div class="pt">Recognize</div><div class="pd">argmin(||wᵢ - w_query||)</div></div></div>
+</div>
+
+<div class="layout">
+<!-- SIDEBAR -->
+<aside class="sb">
+  <div>
+    <div class="sbl">Parameters</div>
+    <div class="cr"><div class="cl">Show k eigenfaces <span class="v" id="kD">10</span></div><input type="range" id="kS" min="1" max="50" value="10"></div>
+    <div class="cr"><div class="cl">Query noise <span class="v" id="nD">15%</span></div><input type="range" id="nS" min="0" max="60" value="15"></div>
+  </div>
+  <div>
+    <button class="btn btn-g" id="trainBtn">▶ Apply k &amp; Refresh</button>
+    <button class="btn btn-b" id="recBtn">◎ Recognize Query</button>
+    <button class="btn btn-r" id="newQBtn">↺ New Query Face</button>
+  </div>
+  <div>
+    <div class="sbl">sklearn PCA Stats</div>
+    <div class="stats">
+      <div class="sc"><div class="v" id="sN">400</div><div class="l">Faces</div></div>
+      <div class="sc"><div class="v" id="sD">4096</div><div class="l">Pixels</div></div>
+      <div class="sc"><div class="v" id="sK">—</div><div class="l">Components</div></div>
+      <div class="sc"><div class="v" id="sV">—</div><div class="l">Var.Expl.</div></div>
+    </div>
+    <div class="vbar"><div class="vfill" id="vfill"></div></div>
+    <div class="vtxt" id="vtxt">Adjust k slider to update</div>
+  </div>
+  <div>
+    <div class="sbl">The Python code that built this</div>
+    <div class="codebox"><span class="kw">from</span> sklearn.decomposition <span class="kw">import</span> <span class="fn">PCA</span>
+<span class="kw">from</span> sklearn.datasets <span class="kw">import</span> <span class="fn">fetch_olivetti_faces</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="cm"># 1. Load real AT&T dataset</span>
+data = <span class="fn">fetch_olivetti_faces</span>()
+X = data.data     <span class="cm"># (400, 4096)</span>
+y = data.target   <span class="cm"># (400,) → 0..39</span>
+
+<span class="cm"># 2. Run real sklearn PCA</span>
+pca = <span class="fn">PCA</span>(n_components=<span class="num">50</span>)
+pca.<span class="fn">fit</span>(X)
+
+<span class="cm"># Eigenfaces = right singular vecs</span>
+eigenfaces = pca.components_
+mean_face  = pca.mean_
+evr        = pca.explained_variance_ratio_
+
+<span class="cm"># 3. Project all faces</span>
+W = pca.<span class="fn">transform</span>(X)  <span class="cm"># (400, 50)</span>
+
+<span class="cm"># 4. Nearest-neighbor recognition</span>
+q_proj = pca.<span class="fn">transform</span>(query)
+dists  = np.linalg.<span class="fn">norm</span>(W - q_proj, axis=<span class="num">1</span>)
+match  = np.<span class="fn">argmin</span>(dists)
+
+<span class="cm"># 5. Reconstruct face from k comps</span>
+f_hat = pca.<span class="fn">inverse_transform</span>(W[i])
+
+<span class="cm"># ↓ Export results → HTML</span>
+<span class="kw">import</span> json, base64
+payload = {{
+  <span class="st">"eigenfaces"</span>:  eigenfaces.<span class="fn">tolist</span>(),
+  <span class="st">"projections"</span>: W.<span class="fn">tolist</span>(),
+  <span class="st">"evr"</span>:         evr.<span class="fn">tolist</span>(),
+  <span class="st">"mean_face"</span>:   mean_face.<span class="fn">tolist</span>(),
+}}
+<span class="cm"># Inject into HTML template:</span>
+html = html.<span class="fn">replace</span>(
+  <span class="st">'/* __SKLEARN_DATA__ */'</span>,
+  <span class="fn">f'const DATA = {json_str};'</span>
+)</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="cnt">
+
+  <!-- PANEL 0: Dataset -->
+  <div class="panel on" id="p0">
+    <div class="ptl">Step 1 — fetch_olivetti_faces() · Real AT&amp;T Dataset</div>
+    <div class="info-banner">
+      <span class="hl">sklearn.datasets.fetch_olivetti_faces()</span> — 400 grayscale faces, 40 subjects × 10 images each.
+      Photographed at AT&amp;T Laboratories Cambridge 1992–1994. 64×64 pixels, dark background.
+      <br>This HTML has the <span class="hl">actual sklearn PCA results</span> baked in by <code>generate_eigenfaces.py</code>.
+    </div>
+
+    <div class="flow">
+      <div class="fbox"><div class="fc">Input</div><div class="fv" style="color:var(--blue)">fetch_olivetti<br>_faces()</div></div>
+      <div class="farr">→</div>
+      <div class="fbox"><div class="fc">X.shape</div><div class="fv" style="color:var(--yellow)">(400, 4096)</div></div>
+      <div class="farr">→</div>
+      <div class="fbox"><div class="fc">PCA.fit(X)</div><div class="fv" style="color:var(--green)">sklearn SVD</div></div>
+      <div class="farr">→</div>
+      <div class="fbox"><div class="fc">components_</div><div class="fv" style="color:var(--purple)">(k, 4096)</div></div>
+      <div class="farr">→</div>
+      <div class="fbox"><div class="fc">transform(X)</div><div class="fv" style="color:var(--red)">(400, k)</div></div>
+      <div class="farr">→</div>
+      <div class="fbox"><div class="fc">embed in</div><div class="fv" style="color:var(--text2)">HTML</div></div>
+    </div>
+
+    <div class="ptl">All 40 Identities (click to select as query)</div>
+    <div class="pgrid" id="personGrid"></div>
+    <div class="ptl">Full Gallery — All 400 Faces</div>
+    <div class="gallery" id="fullGallery"></div>
+    <div class="dgrid">
+      <div class="ditem"><strong>Dataset Origin</strong>AT&T Laboratories Cambridge. 40 subjects, 10 photos each. Varying lighting, facial expressions (smile/neutral), accessories (glasses). 64×64 uint8 grayscale.</div>
+      <div class="ditem"><strong>Matrix X</strong>Each 64×64 image flattened to 4096-dim row. X ∈ ℝ⁴⁰⁰ˣ⁴⁰⁹⁶. sklearn PCA centers, then applies truncated SVD. Here displayed at 32×32 for compactness.</div>
+      <div class="ditem"><strong>sklearn PCA</strong>PCA(n_components=50).fit(X) — runs LAPACK dgesdd (divide-and-conquer SVD) on centered X. Produces components_, mean_, explained_variance_ratio_.</div>
+      <div class="ditem"><strong>HTML Bridge</strong>generate_eigenfaces.py fetches real data, runs real PCA, serializes results to JSON, injects into this HTML. Browser renders everything — no server needed.</div>
+    </div>
+  </div>
+
+  <!-- PANEL 1: SVD/PCA -->
+  <div class="panel" id="p1">
+    <div class="ptl">Step 2 — sklearn PCA internals: A = U Σ Vᵀ</div>
+    <div class="svdeq">
+      <div><div class="svdl" style="color:var(--blue)">X_c</div><div class="svds">A − mean (400×4096)</div></div>
+      <div class="svdop">=</div>
+      <div><div class="svdl" style="color:var(--yellow)">U</div><div class="svds">left singular (400×400)</div></div>
+      <div class="svdop">·</div>
+      <div><div class="svdl" style="color:var(--green)">Σ</div><div class="svds">singular values</div></div>
+      <div class="svdop">·</div>
+      <div><div class="svdl" style="color:var(--red)">Vᵀ</div><div class="svds">eigenfaces (4096×4096)</div></div>
+    </div>
+    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px">
+      <div class="efcard"><canvas id="meanC" width="96" height="96"></canvas><div class="efcap">pca.mean_</div></div>
+      <div style="flex:1;min-width:220px">
+        <div class="chips" style="margin-top:0;margin-bottom:10px">
+          <div class="chip"><span class="k">pca.mean_</span> shape (4096,)</div>
+          <div class="chip"><span class="k">components_</span> shape (k, 4096)</div>
+          <div class="chip"><span class="k">transform(X)</span> → (400, k)</div>
+        </div>
+        <div class="chartbox"><div class="chtit">Singular Values σᵢ (from sklearn · green = selected k)</div><canvas id="svC" height="80"></canvas></div>
+      </div>
+    </div>
+    <div class="dgrid">
+      <div class="ditem"><strong>sklearn internals</strong>PCA.fit() calls scipy.linalg.svd or LAPACK dgesdd on the centered matrix. For n_samples &lt; n_features it uses the compact trick: SVD of XᵀX or XXᵀ.</div>
+      <div class="ditem"><strong>Explained Variance</strong>pca.explained_variance_ratio_[i] = σᵢ²/(N−1) / Σσⱼ²/(N−1). The first component alone captures ~70% of face variance in Olivetti.</div>
+      <div class="ditem"><strong>pca.mean_</strong>Computed as X.mean(axis=0) before SVD. Subtracted automatically in transform(). Represents the "average face" across all 400 images.</div>
+      <div class="ditem"><strong>Reconstruction</strong>pca.inverse_transform(w) = w @ components_ + mean_. Equivalent to: f̂ = Σᵢ wᵢ·efᵢ + μ. Perfect at k=rank(X).</div>
+    </div>
+  </div>
+
+  <!-- PANEL 2: Eigenfaces -->
+  <div class="panel" id="p2">
+    <div class="ptl">Step 3 — pca.components_ — Top-k Eigenfaces</div>
+    <div class="chartbox"><div class="chtit">Cumulative Explained Variance Ratio (pca.explained_variance_ratio_.cumsum())</div><canvas id="cumC" height="80"></canvas></div>
+    <div class="efgrid" id="efGrid"></div>
+    <div class="dgrid" style="margin-top:12px">
+      <div class="ditem"><strong>pca.components_</strong>Shape (k, 4096) — rows are the k principal directions (right singular vectors of centered X). Each reshaped to 64×64 = one eigenface.</div>
+      <div class="ditem"><strong>Variance Ordering</strong>EF #1 has largest σ — captures most variance (avg lighting, head orientation). EF #2 captures next most. Later eigenfaces = fine details like glasses, smile.</div>
+    </div>
+  </div>
+
+  <!-- PANEL 3: Reconstruction -->
+  <div class="panel" id="p3">
+    <div class="ptl">Step 4 — pca.inverse_transform(pca.transform(X[i]))</div>
+    <div class="reconrow" id="reconRow"></div>
+    <div class="chips">
+      <div class="chip">Using <span class="v" id="rK">—</span> of 50 sklearn PCA components</div>
+      <div class="chip">Error → 0 as k → rank(X) ≈ 400</div>
+    </div>
+    <div class="dgrid">
+      <div class="ditem"><strong>sklearn inverse_transform</strong>f̂ = w[:k] @ components_[:k] + mean_. Equivalent to truncating to k components and reconstructing. More k = better but more storage.</div>
+      <div class="ditem"><strong>Compression</strong>1 face = 4096 floats. With k=20: store only 20 weights. 200× compression. Recognition runs entirely in this low-dim eigenspace.</div>
+    </div>
+  </div>
+
+  <!-- PANEL 4: Recognition -->
+  <div class="panel" id="p4">
+    <div class="ptl">Step 5 — argmin(||pca.transform(query) − projections||₂)</div>
+    <div class="recoglayout">
+      <div class="qcol">
+        <div style="font-family:var(--mono);font-size:.54rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.1em">Query + noise</div>
+        <canvas id="qCanvas" width="128" height="128"></canvas>
+        <div style="font-family:var(--mono);font-size:.52rem;color:var(--muted);text-align:center">Person <span id="qPid" style="color:var(--yellow)">—</span></div>
+      </div>
+      <div>
+        <div id="matchResult"><div style="color:var(--muted);font-family:var(--mono);font-size:.65rem;font-weight:700">Click "Recognize Query" to run nearest-neighbor.</div></div>
+        <div id="distSect" style="margin-top:12px"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<script>
+/* __SKLEARN_DATA__ */
+
+// ─── Decode embedded sklearn results ───────────────────────────
+const FW = DATA.img_w, FH = DATA.img_h, FD = FW * FH;
+const N = DATA.n, K_MAX = DATA.k, N_IDS = DATA.n_ids;
+
+function decodeU8B64(b64, rows, cols) {
+  const raw = atob(b64);
+  const u8 = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) u8[i] = raw.charCodeAt(i);
+  const arr = [];
+  for (let i = 0; i < rows; i++) {
+    const row = new Float32Array(cols);
+    for (let j = 0; j < cols; j++) row[j] = u8[i * cols + j] / 255;
+    arr.push(row);
+  }
+  return arr;
+}
+
+const ALL_FACES = decodeU8B64(DATA.faces_b64, N, FD);
+const MEAN_FACE = decodeU8B64(DATA.mean_b64, 1, FD)[0];
+const EIGENFACES = decodeU8B64(DATA.ef_b64, K_MAX, FD);
+const PROJECTIONS = DATA.projections;   // (400, K_MAX) — real sklearn output
+const CUM_EVR = DATA.cum_evr;           // (K_MAX,)
+const EVR = DATA.evr;                   // (K_MAX,)
+const SING_V = DATA.singular_v;         // (K_MAX,)
+const LABELS = DATA.labels;             // (400,)
+
+// ─── PRNG ──────────────────────────────────────────────────────
+function mkRng(seed) {
+  let s = seed >>> 0;
+  return () => {
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = Math.imul(s ^ s >>> 15, 1 | s);
+    t = (t + Math.imul(t ^ t >>> 7, 61 | t)) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+// ─── CANVAS RENDERING ─────────────────────────────────────────
+function drawFace(canvas, face, w, h, dw, dh) {
+  canvas.width = dw; canvas.height = dh;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  let mn = Infinity, mx = -Infinity;
+  for (const v of face) { if (v < mn) mn = v; if (v > mx) mx = v; }
+  const rng = mx - mn || 1;
+  const img = ctx.createImageData(w, h);
+  for (let i = 0; i < w * h; i++) {
+    const v = Math.round(((face[i] - mn) / rng) * 255);
+    img.data[i*4] = v; img.data[i*4+1] = v; img.data[i*4+2] = v; img.data[i*4+3] = 255;
+  }
+  const tmp = document.createElement('canvas');
+  tmp.width = w; tmp.height = h;
+  tmp.getContext('2d').putImageData(img, 0, 0);
+  ctx.drawImage(tmp, 0, 0, dw, dh);
+}
+
+function drawBarChart(canvas, vals, selK, cSel, cOther) {
+  const W = canvas.parentElement.offsetWidth - 24 || 480;
+  canvas.width = W; canvas.height = 80;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, 80);
+  const n = Math.min(vals.length, 50), max = vals[0] || 1, bw = (W - 16) / n;
+  for (let i = 0; i < n; i++) {
+    const bh = (vals[i] / max) * (80 - 14);
+    ctx.fillStyle = i < selK ? cSel : cOther;
+    ctx.fillRect(8 + i * bw, 80 - 6 - bh, bw - 1, bh);
+  }
+  ctx.fillStyle = '#7788aa'; ctx.font = '700 8px IBM Plex Mono,monospace'; ctx.textAlign = 'center';
+  for (let i = 4; i < n; i += 5) ctx.fillText(i + 1, 8 + (i + 0.5) * bw, 78);
+}
+
+function drawCumChart(canvas, cumVar, k) {
+  const W = canvas.parentElement.offsetWidth - 24 || 480;
+  canvas.width = W; canvas.height = 80;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, 80);
+  const n = Math.min(cumVar.length, 50), bw = (W - 16) / n;
+  // 90% dashed line
+  ctx.strokeStyle = 'rgba(255,204,0,.3)'; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
+  const y90 = 80 - 6 - .9 * (80 - 16);
+  ctx.beginPath(); ctx.moveTo(8, y90); ctx.lineTo(W - 8, y90); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#ffcc00'; ctx.font = '700 8px IBM Plex Mono'; ctx.textAlign = 'left';
+  ctx.fillText('90%', W - 30, y90 - 3);
+  // EVR area fill
+  ctx.fillStyle = 'rgba(77,159,255,.1)';
+  ctx.beginPath(); ctx.moveTo(8, 80 - 6);
+  for (let i = 0; i < n; i++) { const x = 8 + (i + .5) * bw, y = 80 - 6 - cumVar[i] * (80 - 16); ctx.lineTo(x, y); }
+  ctx.lineTo(8 + (n - .5) * bw, 80 - 6); ctx.closePath(); ctx.fill();
+  // line
+  ctx.strokeStyle = '#4d9fff'; ctx.lineWidth = 2; ctx.beginPath();
+  for (let i = 0; i < n; i++) {
+    const x = 8 + (i + .5) * bw, y = 80 - 6 - cumVar[i] * (80 - 16);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  // k dot
+  if (k > 0 && k <= n) {
+    const x = 8 + (k - .5) * bw, y = 80 - 6 - cumVar[k-1] * (80 - 16);
+    ctx.fillStyle = '#00ffcc'; ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#00ffcc'; ctx.font = '700 9px IBM Plex Mono'; ctx.textAlign = 'left';
+    ctx.fillText((cumVar[k-1] * 100).toFixed(1) + '%', x + 8, y + 4);
+  }
+  ctx.fillStyle = '#7788aa'; ctx.font = '700 8px IBM Plex Mono'; ctx.textAlign = 'center';
+  for (let i = 4; i < n; i += 5) ctx.fillText(i + 1, 8 + (i + .5) * bw, 78);
+}
+
+// ─── STATE ─────────────────────────────────────────────────────
+let queryIdx = 0;
+
+function setL(pct, sub) {
+  document.getElementById('lbar').style.width = pct + '%';
+  if (sub) document.getElementById('lsub').textContent = sub;
+}
+
+function renderAll() {
+  const k = parseInt(document.getElementById('kS').value);
+
+  // Stats
+  const varPct = (CUM_EVR[k-1] || 0) * 100;
+  document.getElementById('sK').textContent = k;
+  document.getElementById('sV').textContent = varPct.toFixed(0) + '%';
+  document.getElementById('vfill').style.width = varPct + '%';
+  document.getElementById('vtxt').textContent = `k=${k}: ${varPct.toFixed(1)}% variance (sklearn EVR)`;
+
+  // ── Person grid
+  const pg = document.getElementById('personGrid'); pg.innerHTML = '';
+  for (let p = 0; p < N_IDS; p++) {
+    const card = document.createElement('div'); card.className = 'pcard';
+    if (LABELS[queryIdx] === p) card.classList.add('sel');
+    const c = document.createElement('canvas');
+    drawFace(c, ALL_FACES[p * 10], FW, FH, 52, 52);
+    card.appendChild(c);
+    const pid = document.createElement('div'); pid.className = 'pid';
+    pid.textContent = `P${p + 1}`;
+    card.appendChild(pid);
+    card.addEventListener('click', () => {
+      queryIdx = p * 10 + Math.floor(Math.random() * 10);
+      document.querySelectorAll('.pcard').forEach((el, i) => el.classList.toggle('sel', i === p));
+      renderQuery();
+    });
+    pg.appendChild(card);
+  }
+
+  // ── Full gallery
+  const fg = document.getElementById('fullGallery'); fg.innerHTML = '';
+  for (let i = 0; i < N; i++) {
+    const cell = document.createElement('div'); cell.className = 'gcell';
+    const c = document.createElement('canvas');
+    drawFace(c, ALL_FACES[i], FW, FH, 24, 24);
+    cell.appendChild(c);
+    const lbl = document.createElement('div'); lbl.className = 'glbl';
+    lbl.textContent = `P${LABELS[i]+1}`;
+    cell.appendChild(lbl); fg.appendChild(cell);
+  }
+
+  // ── Mean face + SV chart
+  drawFace(document.getElementById('meanC'), MEAN_FACE, FW, FH, 96, 96);
+  drawBarChart(document.getElementById('svC'), SING_V, k, 'rgba(0,255,204,.85)', 'rgba(77,159,255,.25)');
+
+  // ── Cum chart + eigenfaces
+  drawCumChart(document.getElementById('cumC'), CUM_EVR, k);
+  const efG = document.getElementById('efGrid'); efG.innerHTML = '';
+  EIGENFACES.slice(0, k).forEach((ef, i) => {
+    const card = document.createElement('div'); card.className = 'efcard';
+    const c = document.createElement('canvas');
+    drawFace(c, ef, FW, FH, 58, 58);
+    card.appendChild(c);
+    const cap = document.createElement('div'); cap.className = 'efcap';
+    cap.innerHTML = `EF <span>#${i+1}</span><br>${(EVR[i]*100).toFixed(1)}% var`;
+    card.appendChild(cap); efG.appendChild(card);
+  });
+
+  // ── Reconstruction (20 faces using sklearn projections)
+  document.getElementById('rK').textContent = k;
+  const rr = document.getElementById('reconRow'); rr.innerHTML = '';
+  for (let p = 0; p < 20; p++) {
+    const idx = p * 10;
+    // Reconstruct using first k sklearn projections
+    const recon = new Float32Array(FD);
+    for (let j = 0; j < FD; j++) recon[j] = MEAN_FACE[j];
+    for (let ki = 0; ki < k; ki++) {
+      const w = PROJECTIONS[idx][ki];
+      const ef = EIGENFACES[ki];
+      for (let j = 0; j < FD; j++) recon[j] += w * ef[j];
+    }
+
+    const rc = document.createElement('div'); rc.className = 'reccard';
+    const rp = document.createElement('div'); rp.className = 'recpair';
+    const c1 = document.createElement('canvas'), c2 = document.createElement('canvas');
+    drawFace(c1, ALL_FACES[idx], FW, FH, 44, 44);
+    drawFace(c2, recon, FW, FH, 44, 44);
+    c1.style.cssText = 'border:1px solid #242444;';
+    c2.style.cssText = 'border:2px solid var(--green);border-radius:2px;';
+    const sep = document.createElement('div');
+    sep.style.cssText = 'font-family:var(--mono);font-size:.75rem;color:var(--muted);padding:0 2px;';
+    sep.textContent = '→';
+    rp.appendChild(c1); rp.appendChild(sep); rp.appendChild(c2); rc.appendChild(rp);
+    const rl = document.createElement('div'); rl.className = 'reclbl';
+    rl.textContent = `P${p+1}`;
+    rc.appendChild(rl); rr.appendChild(rc);
+  }
+
+  renderQuery();
+}
+
+function addNoise(face, level) {
+  const rng = mkRng(Date.now() & 0xFFFF);
+  return face.map(v => Math.max(0, Math.min(1, v + (rng() - .5) * level * 2)));
+}
+
+function renderQuery() {
+  const noise = parseInt(document.getElementById('nS').value) / 100;
+  document.getElementById('qPid').textContent = LABELS[queryIdx] + 1;
+  const qFace = addNoise(Array.from(ALL_FACES[queryIdx]), noise);
+  drawFace(document.getElementById('qCanvas'), qFace, FW, FH, 128, 128);
+}
+
+function runRecognize() {
+  const k = parseInt(document.getElementById('kS').value);
+  const noise = parseInt(document.getElementById('nS').value) / 100;
+  const qFace = addNoise(Array.from(ALL_FACES[queryIdx]), noise);
+
+  // Project query onto eigenfaces (same as pca.transform)
+  const centered = qFace.map((v, j) => v - MEAN_FACE[j]);
+  const qProj = EIGENFACES.slice(0, k).map(ef => {
+    let d = 0; for (let j = 0; j < FD; j++) d += centered[j] * ef[j]; return d;
+  });
+
+  // Distance to all training projections (using first k components)
+  const dists = PROJECTIONS.map(p => {
+    let d = 0;
+    for (let i = 0; i < k; i++) d += (p[i] - qProj[i]) ** 2;
+    return Math.sqrt(d);
+  });
+  let minD = Infinity, bestIdx = 0;
+  dists.forEach((d, i) => { if (d < minD) { minD = d; bestIdx = i; } });
+
+  const trueId = LABELS[queryIdx], predId = LABELS[bestIdx];
+  const correct = trueId === predId;
+
+  const mc = document.createElement('canvas');
+  drawFace(mc, Array.from(ALL_FACES[bestIdx]), FW, FH, 80, 80);
+  mc.style.cssText = 'image-rendering:pixelated;border:2px solid var(--green);border-radius:3px;display:block;';
+
+  document.getElementById('matchResult').innerHTML = `
+    <div class="matchcard">
+      <div>
+        <div class="mscore ${correct ? 'ok' : 'bad'}">${correct ? '✓ HIT' : '✗ MISS'}</div>
+        <div style="font-family:var(--mono);font-size:.52rem;font-weight:700;color:var(--muted);margin-top:2px">dist: ${minD.toFixed(3)}</div>
+      </div>
+      <div class="mdet" style="flex:1">
+        <h3>Query: Person ${trueId + 1} · image ${queryIdx % 10 + 1}/10</h3>
+        <p>Predicted: Person ${predId + 1} · image ${bestIdx % 10 + 1}/10</p>
+        <p style="margin-top:4px;color:${correct ? 'var(--green)' : 'var(--red)'};font-size:.61rem">
+          ${correct ? 'Correct — nearest neighbor in sklearn eigenspace!' : `Misclassified — try higher k (currently k=${k}) or lower noise.`}
+        </p>
+        <p style="margin-top:2px;color:var(--muted);font-size:.58rem">k=${k} sklearn components · noise=${(noise*100).toFixed(0)}%</p>
+      </div>
+      <div style="text-align:center">
+        <div id="__mc__"></div>
+        <div style="font-family:var(--mono);font-size:.48rem;color:var(--muted);margin-top:3px;font-weight:700">BEST MATCH</div>
+      </div>
+    </div>`;
+  document.getElementById('__mc__').replaceWith(mc);
+
+  const sorted = dists.map((d, i) => ({ d, i })).sort((a, b) => a.d - b.d).slice(0, 8);
+  const maxD = sorted[sorted.length - 1].d || 1;
+  document.getElementById('distSect').innerHTML =
+    `<div style="font-family:var(--mono);font-size:.53rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.14em;margin-bottom:8px">Top-8 sklearn eigenspace distances</div>
+     <div class="distlist">${sorted.map(({ d, i }) => `
+      <div class="distrow">
+        <div class="dname">P${LABELS[i]+1} img${i%10+1}${i===queryIdx?' <span style="color:var(--red)">(Q)</span>':''}</div>
+        <div class="dtrack"><div class="dfill" style="width:${((1-d/maxD)*100).toFixed(1)}%;background:${i===bestIdx?'var(--green)':'var(--blue)'}"></div></div>
+        <div class="dval">${d.toFixed(2)}</div>
+      </div>`).join('')}</div>`;
+
+  switchPanel(4);
+}
+
+function switchPanel(idx) {
+  document.querySelectorAll('.ps').forEach((s, i) => s.classList.toggle('on', i === idx));
+  document.querySelectorAll('.panel').forEach((p, i) => p.classList.toggle('on', i === idx));
+}
+document.querySelectorAll('.ps').forEach((s, i) => s.addEventListener('click', () => switchPanel(i)));
+
+document.getElementById('kS').addEventListener('input', function () { document.getElementById('kD').textContent = this.value; });
+document.getElementById('nS').addEventListener('input', function () { document.getElementById('nD').textContent = this.value + '%'; renderQuery(); });
+document.getElementById('trainBtn').addEventListener('click', renderAll);
+document.getElementById('recBtn').addEventListener('click', runRecognize);
+document.getElementById('newQBtn').addEventListener('click', () => {
+  queryIdx = Math.floor(Math.random() * N);
+  document.querySelectorAll('.pcard').forEach((el, i) => el.classList.toggle('sel', i === LABELS[queryIdx]));
+  renderQuery();
+});
+
+// ─── INIT ──────────────────────────────────────────────────────
+(async function init() {
+  const ov = document.getElementById('lov');
+  ov.classList.add('show');
+  document.getElementById('ltit').textContent = 'Loading sklearn PCA Results…';
+  setL(30, 'Decoding face images…');
+  await new Promise(r => setTimeout(r, 20));
+  setL(70, 'Parsing PCA projections…');
+  await new Promise(r => setTimeout(r, 20));
+  setL(100, 'Done!');
+  await new Promise(r => setTimeout(r, 150));
+  ov.classList.remove('show');
+  renderAll();
+})();
+</script>
+</body>
+</html>

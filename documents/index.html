@@ -1,0 +1,1862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eigenfaces — User Guide & Technical Documentation</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --ink: #0f1117;
+  --ink2: #2a2d35;
+  --ink3: #4a4f5e;
+  --muted: #7c8292;
+  --rule: #e2e5ec;
+  --rule2: #eef0f5;
+  --bg: #f8f9fc;
+  --white: #ffffff;
+  --teal: #0d7e6e;
+  --teal-lt: #e6f5f2;
+  --teal-md: #b3e0d9;
+  --blue: #1a56a0;
+  --blue-lt: #e8f0fa;
+  --amber: #a05c00;
+  --amber-lt: #fff3e0;
+  --red: #c0392b;
+  --red-lt: #fdecea;
+  --pre-bg: #0d1117;
+  --mono: 'DM Mono', monospace;
+  --serif: 'DM Serif Display', serif;
+  --sans: 'DM Sans', sans-serif;
+}
+
+/* ─── DARK MODE ───────────────────────────────────── */
+html.dark {
+  --ink: #f0f4ff;
+  --ink2: #c9d3e8;
+  --ink3: #8b97b8;
+  --muted: #5a6580;
+  --rule: #1e2535;
+  --rule2: #161d2c;
+  --bg: #0b0f1a;
+  --white: #111827;
+  --teal: #2dd4b8;
+  --teal-lt: rgba(45,212,184,0.08);
+  --teal-md: rgba(45,212,184,0.25);
+  --blue: #60a5fa;
+  --blue-lt: rgba(96,165,250,0.08);
+  --amber: #fbbf24;
+  --amber-lt: rgba(251,191,36,0.08);
+  --red: #f87171;
+  --red-lt: rgba(248,113,113,0.08);
+  --pre-bg: #060a10;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--ink2);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.25s, color 0.25s;
+}
+
+/* ─── LAYOUT ──────────────────────────────────────── */
+.page {
+  display: grid;
+  grid-template-columns: 248px 1fr;
+  min-height: 100vh;
+}
+
+/* ─── SIDEBAR NAV ─────────────────────────────────── */
+.nav {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  background: var(--white);
+  border-right: 1px solid var(--rule);
+  padding: 32px 0 40px;
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-logo {
+  padding: 0 24px 28px;
+  border-bottom: 1px solid var(--rule2);
+  margin-bottom: 20px;
+}
+
+.nav-logo-title {
+  font-family: var(--serif);
+  font-size: 1.35rem;
+  color: var(--ink);
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.nav-logo-sub {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.nav-section-label {
+  padding: 0 24px;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+  margin-top: 20px;
+}
+
+.nav a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 24px;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--ink3);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: all 0.15s;
+}
+
+.nav a:hover {
+  color: var(--teal);
+  background: var(--teal-lt);
+  border-left-color: var(--teal);
+}
+
+.nav a.active {
+  color: var(--teal);
+  background: var(--teal-lt);
+  border-left-color: var(--teal);
+  font-weight: 500;
+}
+
+.nav-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--rule);
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.nav a:hover .nav-dot,
+.nav a.active .nav-dot { background: var(--teal); }
+
+/* ─── MAIN CONTENT ────────────────────────────────── */
+.content {
+  padding: 56px 64px 96px;
+  max-width: 900px;
+}
+
+/* ─── HERO ────────────────────────────────────────── */
+.hero {
+  margin-bottom: 64px;
+  padding-bottom: 48px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.hero-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.tag-teal { background: var(--teal-lt); color: var(--teal); }
+.tag-blue { background: var(--blue-lt); color: var(--blue); }
+.tag-amber { background: var(--amber-lt); color: var(--amber); }
+
+.hero h1 {
+  font-family: var(--serif);
+  font-size: clamp(2.2rem, 4vw, 3.4rem);
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+}
+
+.hero h1 em {
+  font-style: italic;
+  color: var(--teal);
+}
+
+.hero-lead {
+  font-size: 1.05rem;
+  font-weight: 300;
+  color: var(--ink3);
+  line-height: 1.75;
+  max-width: 600px;
+  margin-bottom: 28px;
+}
+
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.hero-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hero-meta-label {
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.hero-meta-val {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--teal);
+  font-weight: 500;
+}
+
+/* ─── SECTION STRUCTURE ───────────────────────────── */
+.doc-section {
+  margin-bottom: 64px;
+  scroll-margin-top: 32px;
+}
+
+.section-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.section-number {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--muted);
+  padding-top: 6px;
+  white-space: nowrap;
+}
+
+.section-header h2 {
+  font-family: var(--serif);
+  font-size: 1.8rem;
+  font-weight: 400;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+h3 {
+  font-family: var(--sans);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 10px;
+  margin-top: 28px;
+  letter-spacing: -0.01em;
+}
+
+h4 {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 8px;
+  margin-top: 20px;
+}
+
+p {
+  color: var(--ink3);
+  margin-bottom: 14px;
+  font-weight: 300;
+  font-size: 1rem;
+}
+
+p strong {
+  color: var(--ink2);
+  font-weight: 600;
+}
+
+/* ─── CODE ────────────────────────────────────────── */
+code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--rule2);
+  color: var(--teal);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+pre {
+  background: var(--pre-bg);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  overflow-x: auto;
+  margin: 16px 0;
+  position: relative;
+}
+
+pre .pre-label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #4a5568;
+  padding: 14px 52px 0 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding-bottom: 10px;
+  margin-bottom: 0;
+}
+
+pre code {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  line-height: 1.85;
+  color: #e2e8f0;
+  background: none;
+  padding: 14px 18px 18px;
+  border-radius: 0;
+}
+
+/* ─── COPY BUTTON ─────────────────────────────────── */
+.copy-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 5px;
+  color: #7a8899;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: all 0.18s;
+  user-select: none;
+  z-index: 2;
+}
+
+.copy-btn:hover {
+  background: rgba(45,212,184,0.15);
+  border-color: rgba(45,212,184,0.4);
+  color: #2dd4b8;
+}
+
+.copy-btn.copied {
+  background: rgba(45,212,184,0.2);
+  border-color: rgba(45,212,184,0.5);
+  color: #2dd4b8;
+}
+
+.copy-btn svg {
+  width: 12px; height: 12px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+.kw { color: #63b3ed; }
+.fn { color: #68d391; }
+.st { color: #fbd38d; }
+.cm { color: #4a5568; font-style: italic; }
+.num { color: #fc8181; }
+.op { color: #a0aec0; }
+.var { color: #e2e8f0; }
+.cls { color: #b794f4; }
+
+/* ─── DARK MODE TOGGLE BUTTON ─────────────────────── */
+.dm-btn {
+  position: fixed;
+  top: 16px;
+  right: 20px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 7px 14px 7px 10px;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s;
+  user-select: none;
+}
+
+.dm-btn:hover {
+  border-color: var(--teal);
+  color: var(--teal);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+.dm-btn-icon {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: transform 0.3s;
+}
+
+.dm-btn:hover .dm-btn-icon { transform: rotate(20deg); }
+
+/* Remove old toggle styles */
+
+/* ─── CALLOUTS ────────────────────────────────────── */
+.callout {
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 16px 0;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.callout-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.callout-body { flex: 1; }
+
+.callout-body strong {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.callout-body p {
+  font-size: 0.82rem;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.callout-info { background: var(--blue-lt); border-left: 3px solid var(--blue); }
+.callout-info strong { color: var(--blue); }
+.callout-info p { color: var(--ink3); }
+
+.callout-tip { background: var(--teal-lt); border-left: 3px solid var(--teal); }
+.callout-tip strong { color: var(--teal); }
+.callout-tip p { color: var(--ink3); }
+
+.callout-warn { background: var(--amber-lt); border-left: 3px solid var(--amber); }
+.callout-warn strong { color: var(--amber); }
+.callout-warn p { color: var(--ink3); }
+
+/* ─── TABLES ──────────────────────────────────────── */
+.table-wrap {
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 16px 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+thead tr {
+  background: var(--rule2);
+  border-bottom: 1px solid var(--rule);
+}
+
+thead th {
+  padding: 10px 16px;
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+tbody td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--rule2);
+  color: var(--ink3);
+  vertical-align: top;
+  font-weight: 300;
+}
+
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--rule2); }
+
+td code { font-size: 0.78rem; }
+
+/* ─── STEP LIST ───────────────────────────────────── */
+.step-list { display: flex; flex-direction: column; gap: 2px; margin: 16px 0; }
+
+.step-item {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 0;
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: box-shadow 0.15s;
+}
+
+.step-item:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+
+.step-n {
+  background: var(--teal-lt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--teal);
+  border-right: 1px solid var(--teal-md);
+}
+
+.step-body {
+  padding: 14px 18px;
+}
+
+.step-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.step-desc {
+  font-size: 0.8rem;
+  color: var(--ink3);
+  font-weight: 300;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ─── MATH FORMULA ────────────────────────────────── */
+.formula-block {
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--teal);
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin: 16px 0;
+  text-align: center;
+}
+
+.formula {
+  font-family: var(--mono);
+  font-size: 1.05rem;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+  line-height: 2;
+}
+
+.formula .var { color: var(--blue); font-style: italic; }
+.formula .op2 { color: var(--ink3); }
+.formula .mat { color: var(--teal); font-weight: 500; }
+.formula .sub { font-size: 0.65em; vertical-align: sub; }
+.formula .sup { font-size: 0.65em; vertical-align: super; }
+
+.formula-caption {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 8px;
+  font-family: var(--mono);
+}
+
+/* ─── PIPELINE DIAGRAM ────────────────────────────── */
+.pipeline {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin: 20px 0;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.pipe-box {
+  flex: 1;
+  min-width: 120px;
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-right: none;
+  padding: 16px 14px;
+  text-align: center;
+  position: relative;
+  transition: background 0.15s;
+}
+
+.pipe-box:first-child { border-radius: 8px 0 0 8px; }
+.pipe-box:last-child { border-right: 1px solid var(--rule); border-radius: 0 8px 8px 0; }
+.pipe-box:hover { background: var(--teal-lt); }
+
+.pipe-box::after {
+  content: '→';
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 1rem;
+  z-index: 1;
+}
+
+.pipe-box:last-child::after { display: none; }
+
+.pipe-num {
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.pipe-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.pipe-code {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: var(--teal);
+  line-height: 1.5;
+}
+
+/* ─── FILE CARDS ──────────────────────────────────── */
+.file-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.file-card {
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 16px;
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+
+.file-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+  border-color: var(--teal-md);
+}
+
+.file-card-icon {
+  width: 32px; height: 32px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+  margin-bottom: 10px;
+}
+
+.icon-py { background: #fef3c7; }
+.icon-html { background: #e0f2fe; }
+.icon-out { background: #dcfce7; }
+
+.file-card-name {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--teal);
+  margin-bottom: 6px;
+  word-break: break-all;
+}
+
+.file-card-desc {
+  font-size: 0.77rem;
+  color: var(--ink3);
+  font-weight: 300;
+  line-height: 1.55;
+}
+
+/* ─── FEATURE LIST ────────────────────────────────── */
+.feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.feature-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+}
+
+.feature-marker {
+  width: 24px; height: 24px;
+  border-radius: 6px;
+  background: var(--teal-lt);
+  color: var(--teal);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-family: var(--mono);
+  flex-shrink: 0;
+}
+
+.feature-text h4 {
+  margin: 0 0 3px;
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.feature-text p {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+/* ─── INLINE BADGE ────────────────────────────────── */
+.badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+.badge-teal { background: var(--teal-lt); color: var(--teal); }
+.badge-blue { background: var(--blue-lt); color: var(--blue); }
+.badge-amber { background: var(--amber-lt); color: var(--amber); }
+
+/* ─── DIVIDER ─────────────────────────────────────── */
+.divider {
+  height: 1px;
+  background: var(--rule);
+  margin: 32px 0;
+}
+
+/* ─── TOC progress bar ────────────────────────────── */
+.progress-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--rule);
+  z-index: 100;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--teal), var(--blue));
+  width: 0;
+  transition: width 0.1s linear;
+}
+
+/* ─── SCROLLBAR ───────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* ─── RESPONSIVE ──────────────────────────────────── */
+@media (max-width: 768px) {
+  .page { grid-template-columns: 1fr; }
+  .nav { display: none; }
+  .content { padding: 32px 20px 64px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-fill" id="pf"></div></div>
+
+<button class="dm-btn" id="dmBtn" aria-label="Toggle dark mode">
+  <span class="dm-btn-icon" id="dmIcon">☀️</span>
+  <span id="dmLabel">Light</span>
+</button>
+
+<div class="page">
+
+<!-- ── SIDEBAR ─────────────────────────────────────── -->
+<nav class="nav">
+  <div class="nav-logo">
+    <div class="nav-logo-title">Eigenfaces</div>
+    <div class="nav-logo-sub">User Guide & Documentation</div>
+  </div>
+
+  <div class="nav-section-label">Getting Started</div>
+  <a href="#overview" class="active"><span class="nav-dot"></span>Overview</a>
+  <a href="#quickstart"><span class="nav-dot"></span>Quick Start</a>
+  <a href="#files"><span class="nav-dot"></span>Project Files</a>
+
+  <div class="nav-section-label">How It Works</div>
+  <a href="#workflow"><span class="nav-dot"></span>Workflow</a>
+  <a href="#methodology"><span class="nav-dot"></span>Methodology</a>
+  <a href="#mathematics"><span class="nav-dot"></span>Mathematics</a>
+
+  <div class="nav-section-label">Code Explained</div>
+  <a href="#python-code"><span class="nav-dot"></span>Python Script</a>
+  <a href="#html-code"><span class="nav-dot"></span>HTML Visualization</a>
+  <a href="#sklearn-bridge"><span class="nav-dot"></span>sklearn Bridge</a>
+
+  <div class="nav-section-label">Using the App</div>
+  <a href="#interface"><span class="nav-dot"></span>Interface Guide</a>
+  <a href="#controls"><span class="nav-dot"></span>Controls</a>
+  <a href="#steps"><span class="nav-dot"></span>Five Steps</a>
+
+  <div class="nav-section-label">Reference</div>
+  <a href="#troubleshoot"><span class="nav-dot"></span>Troubleshooting</a>
+  <a href="#glossary"><span class="nav-dot"></span>Glossary</a>
+</nav>
+
+<!-- ── CONTENT ─────────────────────────────────────── -->
+<main class="content">
+
+  <!-- HERO -->
+  <div class="hero" id="overview">
+    <div class="hero-eyebrow">
+      <span class="tag tag-teal">v1.0</span>
+      <span class="tag tag-blue">sklearn · PCA · SVD</span>
+      <span class="tag tag-amber">AT&amp;T Olivetti Dataset</span>
+    </div>
+    <h1><em>Eigenfaces</em> — User Guide &amp;<br>Technical Documentation</h1>
+    <p class="hero-lead">
+      A complete interactive visualization of the Eigenfaces face recognition system, 
+      built on real <code>sklearn.decomposition.PCA</code> running over the AT&amp;T Olivetti 
+      Faces dataset — 400 real face images, 40 identities, all processed through 
+      Principal Component Analysis and visualized in the browser.
+    </p>
+    <div class="hero-meta">
+      <div class="hero-meta-item">
+        <span class="hero-meta-label">Dataset</span>
+        <span class="hero-meta-val">AT&T Olivetti · 400 faces</span>
+      </div>
+      <div class="hero-meta-item">
+        <span class="hero-meta-label">Algorithm</span>
+        <span class="hero-meta-val">PCA / SVD · Eigenfaces</span>
+      </div>
+      <div class="hero-meta-item">
+        <span class="hero-meta-label">Stack</span>
+        <span class="hero-meta-val">Python + sklearn → HTML</span>
+      </div>
+      <div class="hero-meta-item">
+        <span class="hero-meta-label">Platform</span>
+        <span class="hero-meta-val">Windows · Git Bash</span>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── 1. QUICK START ─────────────────────────────── -->
+  <section class="doc-section" id="quickstart">
+    <div class="section-header">
+      <span class="section-number">01</span>
+      <h2>Quick Start</h2>
+    </div>
+
+    <p>Three commands in Git Bash are all you need. Make sure all project files are in the same folder before starting.</p>
+
+    <div class="step-list">
+      <div class="step-item">
+        <div class="step-n">1</div>
+        <div class="step-body">
+          <div class="step-title">Install Python dependencies</div>
+          <pre><code><span class="kw">pip install</span> scikit-learn numpy pillow</code></pre>
+          <p class="step-desc">Downloads scikit-learn (includes sklearn PCA, the Olivetti dataset loader), numpy for array math, and Pillow for image resizing. Only needed once.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-n">2</div>
+        <div class="step-body">
+          <div class="step-title">Navigate to project folder and run the script</div>
+          <pre><code><span class="kw">cd</span> <span class="st">/c/Users/YourName/Downloads/eigenfaces</span>
+<span class="kw">python</span> generate_eigenfaces.py</code></pre>
+          <p class="step-desc">The script fetches the real Olivetti faces, runs <code>PCA(n_components=50).fit(X)</code>, encodes results, and generates the HTML file. Takes 15–30 seconds.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-n">3</div>
+        <div class="step-body">
+          <div class="step-title">Open in browser</div>
+          <pre><code><span class="kw">start</span> eigenfaces_olivetti.html</code></pre>
+          <p class="step-desc">Opens the self-contained visualization in your default browser. No server, no internet required after generation.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout-tip">
+      <span class="callout-icon">💡</span>
+      <div class="callout-body">
+        <strong>Preview without setup</strong>
+        <p>Open <code>eigenfaces_sklearn.html</code> right now — it contains the full interface loaded with simulated data so you can explore before running anything.</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── 2. PROJECT FILES ───────────────────────────── -->
+  <section class="doc-section" id="files">
+    <div class="section-header">
+      <span class="section-number">02</span>
+      <h2>Project Files</h2>
+    </div>
+
+    <p>Four files make up the project. Keep them all in the same folder — the Python script looks for the template by relative path.</p>
+
+    <div class="file-grid">
+      <div class="file-card">
+        <div class="file-card-icon icon-py">🐍</div>
+        <div class="file-card-name">generate_eigenfaces.py</div>
+        <div class="file-card-desc">The Python script you run once. Downloads Olivetti data, runs real sklearn PCA, exports results as base64 JSON, and injects it into the template.</div>
+      </div>
+      <div class="file-card">
+        <div class="file-card-icon icon-html">📄</div>
+        <div class="file-card-name">eigenfaces_template.html</div>
+        <div class="file-card-desc">HTML shell with a <code>/* __SKLEARN_DATA__ */</code> placeholder comment. The script replaces this with the real PCA JSON payload.</div>
+      </div>
+      <div class="file-card">
+        <div class="file-card-icon icon-html">👁</div>
+        <div class="file-card-name">eigenfaces_sklearn.html</div>
+        <div class="file-card-desc">Instant preview version with simulated data already embedded. Open anytime without running Python.</div>
+      </div>
+      <div class="file-card">
+        <div class="file-card-icon icon-out">✅</div>
+        <div class="file-card-name">eigenfaces_olivetti.html</div>
+        <div class="file-card-desc"><strong>Generated output.</strong> Created by the script. Contains all 400 real Olivetti faces + real sklearn PCA results embedded. This is the final deliverable.</div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>File</th><th>Size</th><th>Created by</th><th>Role</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>generate_eigenfaces.py</code></td><td>~3.5 KB</td><td>Provided</td><td>Run once to generate the HTML</td></tr>
+          <tr><td><code>eigenfaces_template.html</code></td><td>~41 KB</td><td>Provided</td><td>HTML shell, keep alongside the script</td></tr>
+          <tr><td><code>eigenfaces_sklearn.html</code></td><td>~2.1 MB</td><td>Provided</td><td>Preview — open immediately</td></tr>
+          <tr><td><code>eigenfaces_olivetti.html</code></td><td>~2+ MB</td><td>Script output</td><td>Final file with real Olivetti data</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+
+  <!-- ── 3. WORKFLOW ────────────────────────────────── -->
+  <section class="doc-section" id="workflow">
+    <div class="section-header">
+      <span class="section-number">03</span>
+      <h2>Workflow</h2>
+    </div>
+
+    <p>
+      The core challenge is that browsers cannot run Python. The solution is a <strong>build-time bridge</strong>:
+      Python runs once on your machine, does all the heavy computation, then serializes the results 
+      into a self-contained HTML file the browser can display with pure JavaScript.
+    </p>
+
+    <div class="pipeline">
+      <div class="pipe-box">
+        <div class="pipe-num">Step 1</div>
+        <div class="pipe-label">Fetch Data</div>
+        <div class="pipe-code">fetch_olivetti<br>_faces()</div>
+      </div>
+      <div class="pipe-box">
+        <div class="pipe-num">Step 2</div>
+        <div class="pipe-label">Run PCA</div>
+        <div class="pipe-code">PCA(k=50)<br>.fit(X)</div>
+      </div>
+      <div class="pipe-box">
+        <div class="pipe-num">Step 3</div>
+        <div class="pipe-label">Export</div>
+        <div class="pipe-code">JSON +<br>base64</div>
+      </div>
+      <div class="pipe-box">
+        <div class="pipe-num">Step 4</div>
+        <div class="pipe-label">Inject</div>
+        <div class="pipe-code">template<br>.replace()</div>
+      </div>
+      <div class="pipe-box">
+        <div class="pipe-num">Step 5</div>
+        <div class="pipe-label">Visualize</div>
+        <div class="pipe-code">Browser<br>renders JS</div>
+      </div>
+    </div>
+
+    <h3>Why not just run sklearn in the browser?</h3>
+    <p>
+      Browsers execute only JavaScript. Python libraries like <code>sklearn</code>, <code>numpy</code>, 
+      and <code>scipy</code> cannot run client-side. Pyodide (Python-in-WebAssembly) could in theory 
+      work but would require downloading a 30+ MB runtime and would be far slower.
+    </p>
+    <p>
+      The chosen approach — <strong>pre-compute in Python, embed in HTML</strong> — gives the best of both worlds: 
+      real sklearn results with zero browser dependencies. The generated HTML is completely self-contained 
+      and can be shared, emailed, or opened offline.
+    </p>
+
+    <h3>Data Flow Detail</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Stage</th><th>Where</th><th>Input</th><th>Output</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>fetch_olivetti_faces()</code></td><td>Python</td><td>Internet (figshare)</td><td><code>X (400,4096)</code>, <code>y (400,)</code></td></tr>
+          <tr><td><code>PCA.fit(X)</code></td><td>Python/sklearn</td><td><code>X</code></td><td>components_, mean_, EVR, projections</td></tr>
+          <tr><td>Downsample + encode</td><td>Python/Pillow</td><td>64×64 images</td><td>32×32 uint8 → base64 strings</td></tr>
+          <tr><td>JSON injection</td><td>Python</td><td>All PCA results</td><td><code>eigenfaces_olivetti.html</code></td></tr>
+          <tr><td>Decode + render</td><td>Browser JS</td><td>base64 JSON</td><td>Canvas drawings, charts</td></tr>
+          <tr><td>Recognition</td><td>Browser JS</td><td>User interaction</td><td>Nearest-neighbor in eigenspace</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+
+  <!-- ── 4. METHODOLOGY ─────────────────────────────── -->
+  <section class="doc-section" id="methodology">
+    <div class="section-header">
+      <span class="section-number">04</span>
+      <h2>Methodology</h2>
+    </div>
+
+    <p>
+      Eigenfaces is a classical computer vision technique introduced by Turk and Pentland (1991). 
+      It applies <strong>Principal Component Analysis (PCA)</strong> to a dataset of face images, 
+      discovering the directions of greatest variance — the "eigenfaces" — and uses projection 
+      into this low-dimensional space for recognition.
+    </p>
+
+    <h3>The AT&T Olivetti Faces Dataset</h3>
+    <p>
+      Collected at AT&T Laboratories Cambridge between 1992–1994. Contains 400 grayscale 
+      photographs of 40 distinct subjects, with 10 images per person. Variations include 
+      different lighting conditions, facial expressions (open/closed eyes, smiling/neutral), 
+      and accessories (glasses or no glasses). Each image is 64×64 pixels = 4,096 dimensions.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Property</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>Total images</td><td>400</td></tr>
+          <tr><td>Identities</td><td>40 subjects</td></tr>
+          <tr><td>Images per person</td><td>10</td></tr>
+          <tr><td>Image size</td><td>64×64 pixels (original) · 32×32 (display)</td></tr>
+          <tr><td>Feature dimension D</td><td>4,096 (64×64 flattened)</td></tr>
+          <tr><td>Color</td><td>Grayscale, uint8, range [0, 255]</td></tr>
+          <tr><td>sklearn access</td><td><code>fetch_olivetti_faces()</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Core Methodology Steps</h3>
+
+    <div class="feature-list">
+      <div class="feature-item">
+        <div class="feature-marker">M1</div>
+        <div class="feature-text">
+          <h4>Build the Data Matrix</h4>
+          <p>Flatten each 64×64 face image into a 4,096-dimensional row vector. Stack all 400 images to form the matrix <strong>X ∈ ℝ⁴⁰⁰ˣ⁴⁰⁹⁶</strong>. Each row is one face; each column is one pixel across all faces.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-marker">M2</div>
+        <div class="feature-text">
+          <h4>Compute and Subtract the Mean Face</h4>
+          <p>Calculate <strong>μ = (1/N) Σ xᵢ</strong> — the average face across all 400 images (<code>pca.mean_</code>). Subtract from every face: <strong>X_c = X − μ</strong>. This centers the data before SVD.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-marker">M3</div>
+        <div class="feature-text">
+          <h4>Singular Value Decomposition (SVD)</h4>
+          <p>Decompose the centered matrix: <strong>X_c = U Σ Vᵀ</strong>. sklearn internally uses LAPACK's <code>dgesdd</code> (divide-and-conquer SVD). The right singular vectors <strong>Vᵀ</strong> are the eigenfaces — directions of maximal variance in face-space.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-marker">M4</div>
+        <div class="feature-text">
+          <h4>Select Top-k Eigenfaces</h4>
+          <p>Retain only the top k singular vectors from <strong>Vᵀ</strong>. These become <code>pca.components_</code> with shape (k, 4096). Each row reshaped to 64×64 is one eigenface — a "face-like" basis image capturing one major mode of variation.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-marker">M5</div>
+        <div class="feature-text">
+          <h4>Project All Faces into Eigenspace</h4>
+          <p>For each face, compute its weights: <strong>wᵢ = (xᵢ − μ) · Vᵏ</strong>. This is <code>pca.transform(X)</code>, producing a (400, k) matrix of projections. Recognition operates entirely in this low-dimensional eigenspace.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-marker">M6</div>
+        <div class="feature-text">
+          <h4>Nearest-Neighbor Recognition</h4>
+          <p>Project query face into eigenspace: <strong>w_q = pca.transform(query)</strong>. Find the training face with minimum Euclidean distance: <strong>match = argmin ||W − w_q||₂</strong>. The identity of the matched face is the prediction.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-marker">M7</div>
+        <div class="feature-text">
+          <h4>Reconstruction</h4>
+          <p>Reconstruct any face from its eigenspace weights: <strong>x̂ = w · Vᵏ + μ</strong> — equivalent to <code>pca.inverse_transform(w)</code>. Using all k=50 components gives near-perfect reconstruction; fewer components give a blurrier approximation.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── 5. MATHEMATICS ─────────────────────────────── -->
+  <section class="doc-section" id="mathematics">
+    <div class="section-header">
+      <span class="section-number">05</span>
+      <h2>Mathematics</h2>
+    </div>
+
+    <h3>SVD Decomposition</h3>
+    <p>sklearn PCA centers the data matrix and applies truncated SVD:</p>
+
+    <div class="formula-block">
+      <div class="formula">
+        <span class="mat">X_c</span>
+        <span class="op2"> = </span>
+        <span class="mat">U</span>
+        <span class="op2"> · </span>
+        <span class="mat">Σ</span>
+        <span class="op2"> · </span>
+        <span class="mat">Vᵀ</span>
+      </div>
+      <div class="formula-caption">
+        X_c ∈ ℝ⁴⁰⁰ˣ⁴⁰⁹⁶ &nbsp;|&nbsp; U ∈ ℝ⁴⁰⁰ˣᵏ &nbsp;|&nbsp; Σ ∈ ℝᵏˣᵏ &nbsp;|&nbsp; Vᵀ ∈ ℝᵏˣ⁴⁰⁹⁶
+      </div>
+    </div>
+
+    <h3>Explained Variance Ratio</h3>
+    <p>Each singular value σᵢ corresponds to one eigenface. The fraction of total variance it explains:</p>
+
+    <div class="formula-block">
+      <div class="formula">
+        EVR<span class="sup">i</span>
+        <span class="op2"> = </span>
+        σᵢ² / (N−1)
+        <span class="op2"> / </span>
+        Σⱼ σⱼ² / (N−1)
+        <span class="op2"> = </span>
+        σᵢ²
+        <span class="op2"> / </span>
+        Σⱼ σⱼ²
+      </div>
+      <div class="formula-caption">pca.explained_variance_ratio_ — same as σᵢ²/Σσⱼ²</div>
+    </div>
+
+    <h3>Projection (Encoding)</h3>
+    <div class="formula-block">
+      <div class="formula">
+        <span class="mat">w</span>
+        <span class="op2"> = pca.transform(x) = </span>
+        <span class="op2">(</span><span class="var">x</span>
+        <span class="op2"> − </span>
+        <span class="mat">μ</span>
+        <span class="op2">) · </span>
+        <span class="mat">Vᵏᵀ</span>
+      </div>
+      <div class="formula-caption">w ∈ ℝᵏ — the face's coordinates in eigenspace</div>
+    </div>
+
+    <h3>Reconstruction (Decoding)</h3>
+    <div class="formula-block">
+      <div class="formula">
+        <span class="mat">x̂</span>
+        <span class="op2"> = pca.inverse_transform(w) = </span>
+        <span class="mat">w</span>
+        <span class="op2"> · </span>
+        <span class="mat">Vᵏ</span>
+        <span class="op2"> + </span>
+        <span class="mat">μ</span>
+        <span class="op2"> = </span>
+        Σᵢ wᵢ · ef<span class="sub">i</span>
+        <span class="op2"> + </span>
+        <span class="mat">μ</span>
+      </div>
+      <div class="formula-caption">x̂ ∈ ℝ⁴⁰⁹⁶ — reconstructed face. Perfect when k = rank(X)</div>
+    </div>
+
+    <h3>Recognition Distance</h3>
+    <div class="formula-block">
+      <div class="formula">
+        match
+        <span class="op2"> = </span>
+        argmin<span class="sub">i</span>
+        <span class="op2"> ||</span>
+        <span class="mat">W</span>[i]
+        <span class="op2"> − </span>
+        <span class="mat">w</span><span class="sub">query</span>
+        <span class="op2">||</span><span class="sub">2</span>
+      </div>
+      <div class="formula-caption">Euclidean distance in eigenspace — used for nearest-neighbor matching</div>
+    </div>
+
+    <div class="callout callout-info">
+      <span class="callout-icon">📐</span>
+      <div class="callout-body">
+        <strong>Why eigenspace distance works for recognition</strong>
+        <p>Projecting into eigenspace removes high-frequency noise and retains only the principal modes of variation — lighting, expression, pose. Two images of the same person cluster closer in this space than images of different people, making simple L2 distance effective for recognition.</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── 6. PYTHON CODE ─────────────────────────────── -->
+  <section class="doc-section" id="python-code">
+    <div class="section-header">
+      <span class="section-number">06</span>
+      <h2>Python Script Explained</h2>
+    </div>
+
+    <p>
+      <code>generate_eigenfaces.py</code> runs in five stages. Each stage is clearly printed 
+      to the terminal so you can follow progress.
+    </p>
+
+    <h3>Stage 1 — Fetch the Dataset</h3>
+    <p>sklearn downloads the AT&T Olivetti dataset from <code>figshare.com</code> (~5 MB) and caches it locally in <code>~/scikit_learn_data/</code>. Future runs use the cache.</p>
+
+    <pre>
+      <span class="pre-label">Python · generate_eigenfaces.py · Stage 1</span>
+      <code><span class="kw">from</span> <span class="cls">sklearn.datasets</span> <span class="kw">import</span> <span class="fn">fetch_olivetti_faces</span>
+
+dataset = <span class="fn">fetch_olivetti_faces</span>(shuffle=<span class="num">False</span>)
+
+X      = dataset.data    <span class="cm"># (400, 4096) float32 — flattened images, range [0,1]</span>
+y      = dataset.target  <span class="cm"># (400,)      int     — identity labels 0..39</span>
+images = dataset.images  <span class="cm"># (400,64,64) float32 — 2D pixel arrays</span></code>
+    </pre>
+
+    <h3>Stage 2 — Run Real sklearn PCA</h3>
+    <p><code>PCA.fit(X)</code> centers X by mean, then calls LAPACK's truncated SVD. All results are standard sklearn attributes.</p>
+
+    <pre>
+      <span class="pre-label">Python · generate_eigenfaces.py · Stage 2</span>
+      <code><span class="kw">from</span> <span class="cls">sklearn.decomposition</span> <span class="kw">import</span> <span class="fn">PCA</span>
+
+K   = <span class="num">50</span>
+pca = <span class="fn">PCA</span>(n_components=K, whiten=<span class="num">False</span>)
+pca.<span class="fn">fit</span>(X)
+
+<span class="cm"># Standard sklearn PCA attributes:</span>
+eigenfaces = pca.components_              <span class="cm"># (50, 4096) — right singular vectors</span>
+mean_face  = pca.mean_                    <span class="cm"># (4096,)    — mean over training set</span>
+evr        = pca.explained_variance_ratio_ <span class="cm"># (50,)     — variance per component</span>
+singular_v = <span class="fn">sqrt</span>(pca.explained_variance_ * (N-<span class="num">1</span>))  <span class="cm"># approx σᵢ</span>
+
+<span class="cm"># Project all 400 faces into eigenspace:</span>
+projections = pca.<span class="fn">transform</span>(X)           <span class="cm"># (400, 50) — real sklearn output</span></code>
+    </pre>
+
+    <h3>Stage 3 — Downsample for Display</h3>
+    <p>Original images are 64×64 but displayed at 32×32 to keep the HTML file size manageable (~2 MB vs ~8 MB). Pillow's LANCZOS filter gives high quality downsampling.</p>
+
+    <pre>
+      <span class="pre-label">Python · generate_eigenfaces.py · Stage 3</span>
+      <code><span class="kw">from</span> <span class="cls">PIL</span> <span class="kw">import</span> <span class="fn">Image</span> <span class="kw">as</span> PILImage
+
+<span class="kw">def</span> <span class="fn">resize32</span>(arr_64):
+    u8  = (arr_64.clip(<span class="num">0</span>,<span class="num">1</span>) * <span class="num">255</span>).astype(<span class="st">'uint8'</span>)
+    pil = PILImage.<span class="fn">fromarray</span>(u8, mode=<span class="st">'L'</span>).<span class="fn">resize</span>((<span class="num">32</span>,<span class="num">32</span>), PILImage.LANCZOS)
+    <span class="kw">return</span> <span class="fn">array</span>(pil, dtype=<span class="st">'float32'</span>) / <span class="num">255.0</span>
+
+faces_32 = <span class="fn">stack</span>([<span class="fn">resize32</span>(images[i]) <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">400</span>)])  <span class="cm"># (400,32,32)</span>
+mean_32  = <span class="fn">resize32</span>(mean_face.<span class="fn">reshape</span>(<span class="num">64</span>,<span class="num">64</span>))               <span class="cm"># (32,32)</span>
+ef_32    = <span class="fn">stack</span>([<span class="fn">resize32</span>(<span class="fn">normalize</span>(eigenfaces[i])) <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(K)])  <span class="cm"># (50,32,32)</span></code>
+    </pre>
+
+    <h3>Stage 4 — Encode to base64</h3>
+    <p>Float arrays are quantized to uint8 and base64-encoded so they can be embedded as strings inside the HTML/JavaScript. The browser decodes them back with <code>atob()</code>.</p>
+
+    <pre>
+      <span class="pre-label">Python · generate_eigenfaces.py · Stage 4</span>
+      <code><span class="kw">import</span> base64, json
+
+<span class="kw">def</span> <span class="fn">b64</span>(arr):
+    u8 = (arr.clip(<span class="num">0</span>,<span class="num">1</span>) * <span class="num">255</span>).astype(<span class="st">'uint8'</span>)
+    <span class="kw">return</span> base64.<span class="fn">b64encode</span>(u8.tobytes()).<span class="fn">decode</span>(<span class="st">'ascii'</span>)
+
+payload = {
+    <span class="st">"faces_b64"</span>:   <span class="fn">b64</span>(faces_32.<span class="fn">reshape</span>(<span class="num">400</span>,<span class="num">-1</span>)),     <span class="cm"># 400 × 1024 pixels</span>
+    <span class="st">"mean_b64"</span>:    <span class="fn">b64</span>(mean_32.<span class="fn">flatten</span>()),            <span class="cm"># 1024 pixels</span>
+    <span class="st">"ef_b64"</span>:      <span class="fn">b64</span>(ef_32.<span class="fn">reshape</span>(K,<span class="num">-1</span>)),          <span class="cm"># 50 × 1024 pixels</span>
+    <span class="st">"projections"</span>: projections.<span class="fn">tolist</span>(),              <span class="cm"># (400, 50) full precision</span>
+    <span class="st">"evr"</span>:         evr.<span class="fn">tolist</span>(),                      <span class="cm"># (50,)</span>
+    <span class="st">"labels"</span>:      y.<span class="fn">tolist</span>(),                        <span class="cm"># (400,) identity IDs</span>
+}</code>
+    </pre>
+
+    <h3>Stage 5 — Inject into HTML Template</h3>
+    <p>The template contains a single placeholder comment. Python replaces it with the full JSON payload — resulting in a self-contained HTML file.</p>
+
+    <pre>
+      <span class="pre-label">Python · generate_eigenfaces.py · Stage 5</span>
+      <code>json_str = json.<span class="fn">dumps</span>(payload, separators=(<span class="st">','</span>,<span class="st">':'</span>))  <span class="cm"># compact JSON</span>
+
+html = <span class="fn">open</span>(<span class="st">'eigenfaces_template.html'</span>).<span class="fn">read</span>()
+
+<span class="cm"># Replace placeholder with real sklearn data:</span>
+html = html.<span class="fn">replace</span>(
+    <span class="st">'/* __SKLEARN_DATA__ */'</span>,
+    <span class="st">f'const DATA = {json_str};'</span>
+)
+
+<span class="fn">open</span>(<span class="st">'eigenfaces_olivetti.html'</span>, <span class="st">'w'</span>).<span class="fn">write</span>(html)</code>
+    </pre>
+  </section>
+
+
+  <!-- ── 7. HTML CODE ───────────────────────────────── -->
+  <section class="doc-section" id="html-code">
+    <div class="section-header">
+      <span class="section-number">07</span>
+      <h2>HTML Visualization Explained</h2>
+    </div>
+
+    <p>
+      The HTML file is pure vanilla JavaScript — no frameworks, no external dependencies. 
+      All face rendering uses the HTML5 <code>&lt;canvas&gt;</code> API.
+    </p>
+
+    <h3>Decoding Embedded Data</h3>
+    <p>When the page loads, the injected <code>DATA</code> constant is decoded back from base64 to pixel arrays.</p>
+
+    <pre>
+      <span class="pre-label">JavaScript · eigenfaces_template.html · Data Decoding</span>
+      <code><span class="cm">// DATA is injected by Python — the const is already in the HTML</span>
+<span class="kw">const</span> FW = DATA.img_w, FH = DATA.img_h, FD = FW * FH;  <span class="cm">// 32, 32, 1024</span>
+
+<span class="kw">function</span> <span class="fn">decodeU8B64</span>(b64, rows, cols) {
+    <span class="kw">const</span> raw = <span class="fn">atob</span>(b64);                     <span class="cm">// base64 → raw bytes</span>
+    <span class="kw">const</span> u8  = <span class="kw">new</span> Uint8Array(raw.length);
+    <span class="kw">for</span> (<span class="kw">let</span> i = <span class="num">0</span>; i &lt; raw.length; i++)
+        u8[i] = raw.<span class="fn">charCodeAt</span>(i);
+
+    <span class="kw">const</span> arr = [];
+    <span class="kw">for</span> (<span class="kw">let</span> i = <span class="num">0</span>; i &lt; rows; i++) {
+        <span class="kw">const</span> row = <span class="kw">new</span> Float32Array(cols);
+        <span class="kw">for</span> (<span class="kw">let</span> j = <span class="num">0</span>; j &lt; cols; j++)
+            row[j] = u8[i*cols + j] / <span class="num">255</span>;    <span class="cm">// uint8 → [0,1]</span>
+        arr.<span class="fn">push</span>(row);
+    }
+    <span class="kw">return</span> arr;
+}
+
+<span class="kw">const</span> ALL_FACES   = <span class="fn">decodeU8B64</span>(DATA.faces_b64,  <span class="num">400</span>, FD);
+<span class="kw">const</span> MEAN_FACE   = <span class="fn">decodeU8B64</span>(DATA.mean_b64,   <span class="num">1</span>,   FD)[<span class="num">0</span>];
+<span class="kw">const</span> EIGENFACES  = <span class="fn">decodeU8B64</span>(DATA.ef_b64,     <span class="num">50</span>,  FD);
+<span class="kw">const</span> PROJECTIONS = DATA.projections;  <span class="cm">// (400, 50) full float64 from sklearn</span></code>
+    </pre>
+
+    <h3>Drawing a Face on Canvas</h3>
+    <p>Every face image — original, eigenface, reconstructed — uses the same canvas drawing function.</p>
+
+    <pre>
+      <span class="pre-label">JavaScript · Face Rendering</span>
+      <code><span class="kw">function</span> <span class="fn">drawFace</span>(canvas, face, w, h, displayW, displayH) {
+    canvas.width = displayW; canvas.height = displayH;
+    <span class="kw">const</span> ctx = canvas.<span class="fn">getContext</span>(<span class="st">'2d'</span>);
+
+    <span class="cm">// Normalize to [0,1] for rendering (handles negative eigenface values)</span>
+    <span class="kw">let</span> mn = Infinity, mx = -Infinity;
+    <span class="kw">for</span> (<span class="kw">const</span> v <span class="kw">of</span> face) { <span class="kw">if</span> (v &lt; mn) mn=v; <span class="kw">if</span> (v &gt; mx) mx=v; }
+
+    <span class="cm">// Write pixel-by-pixel into ImageData at native resolution</span>
+    <span class="kw">const</span> img = ctx.<span class="fn">createImageData</span>(w, h);
+    <span class="kw">for</span> (<span class="kw">let</span> i = <span class="num">0</span>; i &lt; w*h; i++) {
+        <span class="kw">const</span> v = Math.<span class="fn">round</span>((face[i]-mn)/(mx-mn+<span class="num">1e-8</span>) * <span class="num">255</span>);
+        img.data[i*<span class="num">4</span>]   = v;    <span class="cm">// R</span>
+        img.data[i*<span class="num">4</span>+<span class="num">1</span>] = v;    <span class="cm">// G</span>
+        img.data[i*<span class="num">4</span>+<span class="num">2</span>] = v;    <span class="cm">// B</span>
+        img.data[i*<span class="num">4</span>+<span class="num">3</span>] = <span class="num">255</span>; <span class="cm">// A (fully opaque)</span>
+    }
+    <span class="cm">// Scale up from 32×32 → display size with pixelated rendering</span>
+    <span class="kw">const</span> tmp = document.<span class="fn">createElement</span>(<span class="st">'canvas'</span>);
+    tmp.width=w; tmp.height=h;
+    tmp.<span class="fn">getContext</span>(<span class="st">'2d'</span>).<span class="fn">putImageData</span>(img, <span class="num">0</span>, <span class="num">0</span>);
+    ctx.<span class="fn">drawImage</span>(tmp, <span class="num">0</span>, <span class="num">0</span>, displayW, displayH);
+}</code>
+    </pre>
+
+    <h3>Reconstruction in JavaScript</h3>
+    <p>The browser re-implements <code>pca.inverse_transform()</code> using the pre-computed projections and eigenfaces from sklearn.</p>
+
+    <pre>
+      <span class="pre-label">JavaScript · Face Reconstruction</span>
+      <code><span class="kw">function</span> <span class="fn">reconstructFace</span>(faceIdx, k) {
+    <span class="cm">// Start from mean face (equivalent to pca.mean_)</span>
+    <span class="kw">const</span> recon = <span class="kw">new</span> Float32Array(FD);
+    <span class="kw">for</span> (<span class="kw">let</span> j=<span class="num">0</span>; j&lt;FD; j++) recon[j] = MEAN_FACE[j];
+
+    <span class="cm">// Add weighted eigenfaces: Σᵢ wᵢ · efᵢ</span>
+    <span class="kw">for</span> (<span class="kw">let</span> ki=<span class="num">0</span>; ki&lt;k; ki++) {
+        <span class="kw">const</span> w  = PROJECTIONS[faceIdx][ki]; <span class="cm">// real sklearn projection weight</span>
+        <span class="kw">const</span> ef = EIGENFACES[ki];            <span class="cm">// real sklearn eigenface</span>
+        <span class="kw">for</span> (<span class="kw">let</span> j=<span class="num">0</span>; j&lt;FD; j++) recon[j] += w * ef[j];
+    }
+    <span class="kw">return</span> recon;
+}</code>
+    </pre>
+
+    <h3>Nearest-Neighbor Recognition</h3>
+    <p>The recognition step projects the (noisy) query face into eigenspace using the stored eigenfaces, then finds the nearest training projection by Euclidean distance.</p>
+
+    <pre>
+      <span class="pre-label">JavaScript · Recognition</span>
+      <code><span class="kw">function</span> <span class="fn">recognize</span>(queryFace, k) {
+    <span class="cm">// 1. Center the query face</span>
+    <span class="kw">const</span> centered = queryFace.<span class="fn">map</span>((v, j) => v - MEAN_FACE[j]);
+
+    <span class="cm">// 2. Project: w_q = (query - mean) · Vᵏᵀ</span>
+    <span class="kw">const</span> qProj = EIGENFACES.<span class="fn">slice</span>(<span class="num">0</span>, k).<span class="fn">map</span>(ef => {
+        <span class="kw">let</span> d = <span class="num">0</span>;
+        <span class="kw">for</span> (<span class="kw">let</span> j=<span class="num">0</span>; j&lt;FD; j++) d += centered[j] * ef[j];
+        <span class="kw">return</span> d;
+    });
+
+    <span class="cm">// 3. Find nearest training projection by L2 distance</span>
+    <span class="kw">let</span> minDist = Infinity, bestIdx = <span class="num">0</span>;
+    PROJECTIONS.<span class="fn">forEach</span>((p, i) => {
+        <span class="kw">let</span> d = <span class="num">0</span>;
+        <span class="kw">for</span> (<span class="kw">let</span> ki=<span class="num">0</span>; ki&lt;k; ki++) d += (p[ki] - qProj[ki]) ** <span class="num">2</span>;
+        <span class="kw">if</span> (Math.<span class="fn">sqrt</span>(d) &lt; minDist) { minDist = Math.<span class="fn">sqrt</span>(d); bestIdx = i; }
+    });
+    <span class="kw">return</span> { match: bestIdx, dist: minDist, identity: LABELS[bestIdx] };
+}</code>
+    </pre>
+  </section>
+
+
+  <!-- ── 8. SKLEARN BRIDGE ──────────────────────────── -->
+  <section class="doc-section" id="sklearn-bridge">
+    <div class="section-header">
+      <span class="section-number">08</span>
+      <h2>The sklearn Bridge Pattern</h2>
+    </div>
+
+    <p>
+      This project demonstrates a general pattern for bringing any Python ML computation 
+      into a static HTML page. The pattern has three parts:
+    </p>
+
+    <div class="feature-list">
+      <div class="feature-item">
+        <div class="feature-marker">B1</div>
+        <div class="feature-text">
+          <h4>Python computes, JavaScript renders</h4>
+          <p>All heavy math (SVD, PCA, projection) happens in Python at build time. The browser only handles display and user interaction — tasks JavaScript does well with no performance issues.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-marker">B2</div>
+        <div class="feature-text">
+          <h4>Placeholder injection</h4>
+          <p>The HTML template has a single placeholder <code>/* __SKLEARN_DATA__ */</code> inside a <code>&lt;script&gt;</code> tag. Python replaces it with <code>const DATA = {...};</code> — making the data a native JavaScript constant, not a runtime fetch.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-marker">B3</div>
+        <div class="feature-text">
+          <h4>Zero runtime dependencies</h4>
+          <p>The generated HTML imports no external scripts, makes no HTTP requests, and needs no server. It works offline, can be emailed, shared via USB, or hosted on any static file server.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout-info">
+      <span class="callout-icon">🔁</span>
+      <div class="callout-body">
+        <strong>Adapting this pattern for other ML models</strong>
+        <p>Replace <code>fetch_olivetti_faces()</code> with your own dataset. Replace <code>PCA</code> with any sklearn estimator. Serialize what your JavaScript needs (weights, predictions, embeddings). Inject via the same <code>replace(placeholder, json_str)</code> pattern.</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── 9. INTERFACE GUIDE ─────────────────────────── -->
+  <section class="doc-section" id="interface">
+    <div class="section-header">
+      <span class="section-number">09</span>
+      <h2>Interface Guide</h2>
+    </div>
+
+    <p>
+      The visualization has a fixed two-column layout: a <strong>sidebar</strong> on the left for controls and stats, 
+      and a <strong>main panel</strong> on the right with five tabs corresponding to the five stages of the 
+      Eigenfaces pipeline.
+    </p>
+
+    <h3>Layout Regions</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Region</th><th>Contents</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Header</strong></td><td>Title, dataset info, badges</td></tr>
+          <tr><td><strong>Pipeline tabs</strong></td><td>Five clickable steps — click any to jump to that stage</td></tr>
+          <tr><td><strong>Sidebar</strong></td><td>k slider, noise slider, action buttons, live stats, sklearn code reference</td></tr>
+          <tr><td><strong>Main panel</strong></td><td>Content for the currently selected pipeline step</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+
+  <!-- ── 10. CONTROLS ───────────────────────────────── -->
+  <section class="doc-section" id="controls">
+    <div class="section-header">
+      <span class="section-number">10</span>
+      <h2>Controls Reference</h2>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Control</th><th>Range</th><th>Effect</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>k slider</strong></td>
+            <td>1 – 50</td>
+            <td>Number of eigenfaces used. Higher k = more variance captured = better reconstruction and recognition. Lower k = faster, more compressed, less accurate.</td>
+          </tr>
+          <tr>
+            <td><strong>Noise slider</strong></td>
+            <td>0 – 60%</td>
+            <td>Gaussian noise added to the query face before recognition. Tests robustness. At 0% the system uses a clean image; at 60% the face is heavily degraded.</td>
+          </tr>
+          <tr>
+            <td><strong>Apply k &amp; Refresh</strong></td>
+            <td>Button</td>
+            <td>Re-renders all panels with the current k value. Updates eigenface grid, reconstruction pairs, variance chart, and stats.</td>
+          </tr>
+          <tr>
+            <td><strong>Recognize Query</strong></td>
+            <td>Button</td>
+            <td>Projects the current query face (with noise) into eigenspace using the current k, runs nearest-neighbor, and switches to Step 5 to show results.</td>
+          </tr>
+          <tr>
+            <td><strong>New Query</strong></td>
+            <td>Button</td>
+            <td>Selects a random face from the 400 Olivetti images as the new query. Also updates the person grid selection highlight.</td>
+          </tr>
+          <tr>
+            <td><strong>Person grid</strong></td>
+            <td>Click</td>
+            <td>Click any of the 40 identity cards in Step 1 to set a face from that person as the query. Highlights selected identity.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+
+  <!-- ── 11. FIVE STEPS ─────────────────────────────── -->
+  <section class="doc-section" id="steps">
+    <div class="section-header">
+      <span class="section-number">11</span>
+      <h2>The Five Pipeline Steps</h2>
+    </div>
+
+    <div class="feature-list">
+      <div class="feature-item">
+        <div class="feature-marker">01</div>
+        <div class="feature-text">
+          <h4>Step 1 — Dataset · fetch_olivetti_faces()</h4>
+          <p>Displays all 40 identity cards (one representative image each) and the full 400-face gallery. Click any identity card to select it as the recognition query. Hover any face in the gallery to see its person ID. This step corresponds to loading X and y from sklearn.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-marker">02</div>
+        <div class="feature-text">
+          <h4>Step 2 — PCA / SVD · PCA.fit(X)</h4>
+          <p>Shows the mean face (<code>pca.mean_</code>) and a bar chart of singular values σᵢ. Bars highlighted in green are the k selected components; grey bars are excluded. The SVD equation is displayed with the actual matrix shapes. Adjusting k updates the green/grey split.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-marker">03</div>
+        <div class="feature-text">
+          <h4>Step 3 — Eigenfaces · pca.components_</h4>
+          <p>Shows the cumulative explained variance curve with a 90% reference line and a green dot marking the current k. Below the chart, all k eigenfaces are displayed as thumbnails — these are the rows of <code>pca.components_</code>, reshaped to 32×32 and normalized for display. Earlier eigenfaces capture broad features; later ones capture fine detail.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-marker">04</div>
+        <div class="feature-text">
+          <h4>Step 4 — Reconstruction · pca.inverse_transform()</h4>
+          <p>Displays 20 side-by-side pairs: original face (left) and reconstruction (right). Reconstruction uses the stored sklearn projections plus the first k eigenfaces. Lower k gives blurrier, approximate faces; at k=50 the reconstruction is nearly perfect. The percentage label shows how much variance is retained.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-marker">05</div>
+        <div class="feature-text">
+          <h4>Step 5 — Recognition · argmin(||W − w_q||₂)</h4>
+          <p>Shows the noisy query face, the recognition result (HIT or MISS), and a horizontal bar chart of the top-8 nearest neighbors with their L2 distances in eigenspace. The green bar is the best match; blue bars are runners-up. Adjusting noise or k and re-running shows how both parameters affect accuracy.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── 12. TROUBLESHOOTING ────────────────────────── -->
+  <section class="doc-section" id="troubleshoot">
+    <div class="section-header">
+      <span class="section-number">12</span>
+      <h2>Troubleshooting</h2>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Error</th><th>Cause</th><th>Fix</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>python: command not found</code></td>
+            <td>Python not in PATH</td>
+            <td>Try <code>python3</code> instead, or reinstall Python from <code>python.org</code> and check "Add to PATH"</td>
+          </tr>
+          <tr>
+            <td><code>pip: command not found</code></td>
+            <td>pip not in PATH</td>
+            <td>Use <code>python -m pip install ...</code></td>
+          </tr>
+          <tr>
+            <td><code>URLError: Tunnel connection failed</code></td>
+            <td>figshare.com blocked by network</td>
+            <td>Use mobile hotspot, VPN, or different Wi-Fi network. Only needed for first download; then cached locally.</td>
+          </tr>
+          <tr>
+            <td><code>eigenfaces_template.html not found</code></td>
+            <td>Files not in same folder</td>
+            <td>Run <code>ls</code> to confirm both <code>generate_eigenfaces.py</code> and <code>eigenfaces_template.html</code> are in the current directory</td>
+          </tr>
+          <tr>
+            <td><code>ModuleNotFoundError: PIL</code></td>
+            <td>Pillow not installed</td>
+            <td>Script has a numpy fallback — just re-run. Or install: <code>pip install pillow</code></td>
+          </tr>
+          <tr>
+            <td>Blank page in browser</td>
+            <td>File too large / wrong browser</td>
+            <td>Use Chrome or Firefox. Edge and Safari may have issues with large inline scripts. Try <code>python -m http.server 8080</code> and open <code>localhost:8080</code></td>
+          </tr>
+          <tr>
+            <td>Faces look pixelated</td>
+            <td>Expected — 32×32 display</td>
+            <td>This is intentional for file size. The recognition math still uses full-precision sklearn data.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout-warn">
+      <span class="callout-icon">⚠</span>
+      <div class="callout-body">
+        <strong>Network required only once</strong>
+        <p>sklearn caches the Olivetti dataset in <code>~/scikit_learn_data/</code> after the first download. All subsequent runs of <code>generate_eigenfaces.py</code> use the cache and need no internet connection.</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── 13. GLOSSARY ───────────────────────────────── -->
+  <section class="doc-section" id="glossary">
+    <div class="section-header">
+      <span class="section-number">13</span>
+      <h2>Glossary</h2>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Term</th><th>Definition</th></tr></thead>
+        <tbody>
+          <tr><td><strong>PCA</strong></td><td>Principal Component Analysis — dimensionality reduction technique that finds directions of maximum variance in data.</td></tr>
+          <tr><td><strong>SVD</strong></td><td>Singular Value Decomposition — matrix factorization A = UΣVᵀ. sklearn PCA uses truncated SVD internally.</td></tr>
+          <tr><td><strong>Eigenface</strong></td><td>A principal component of the face dataset — one row of <code>pca.components_</code>, reshaped to an image. Looks like a ghostly face pattern.</td></tr>
+          <tr><td><strong>Eigenspace</strong></td><td>The low-dimensional coordinate system spanned by the top-k eigenfaces. Each face maps to a point in this space.</td></tr>
+          <tr><td><strong>Projection</strong></td><td>The coordinates of a face in eigenspace — computed by <code>pca.transform()</code>. Shape: (k,) per face.</td></tr>
+          <tr><td><strong>Reconstruction</strong></td><td>Rebuilding a face from its eigenspace coordinates — <code>pca.inverse_transform()</code>. Quality improves with larger k.</td></tr>
+          <tr><td><strong>EVR</strong></td><td>Explained Variance Ratio — fraction of total variance captured by each component. Sum to 1 across all components.</td></tr>
+          <tr><td><strong>Nearest Neighbor</strong></td><td>Recognition method — finds the training face whose eigenspace projection is closest (min L2 distance) to the query.</td></tr>
+          <tr><td><strong>mean_ (μ)</strong></td><td><code>pca.mean_</code> — the average pixel values across all training faces. Subtracted before projection, added during reconstruction.</td></tr>
+          <tr><td><strong>components_</strong></td><td><code>pca.components_</code> — shape (k, D). The eigenfaces. Row i is the i-th principal direction in pixel space.</td></tr>
+          <tr><td><strong>k</strong></td><td>Number of eigenfaces (PCA components) to use. Trades off accuracy vs. dimensionality.</td></tr>
+          <tr><td><strong>base64</strong></td><td>Binary-to-text encoding that lets pixel data be stored as ASCII strings inside HTML/JavaScript.</td></tr>
+          <tr><td><strong>AT&T Olivetti</strong></td><td>Standard face recognition benchmark dataset. 400 images, 40 subjects × 10 photos, 64×64 grayscale.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="divider"></div>
+
+    <p style="text-align:center;font-family:var(--mono);font-size:0.7rem;color:var(--muted);">
+      Eigenfaces · sklearn PCA · AT&T Olivetti Faces &nbsp;·&nbsp; MSDE Cohort 4 &nbsp;·&nbsp; User Guide v1.0
+    </p>
+  </section>
+
+</main>
+</div>
+
+<script>
+// ── DARK MODE ──────────────────────────────────────
+const dmBtn   = document.getElementById('dmBtn');
+const dmIcon  = document.getElementById('dmIcon');
+const dmLabel = document.getElementById('dmLabel');
+const html    = document.documentElement;
+
+function applyDark(on) {
+  html.classList.toggle('dark', on);
+  dmIcon.textContent  = on ? '🌙' : '☀️';
+  dmLabel.textContent = on ? 'Dark' : 'Light';
+  localStorage.setItem('dm', on ? '1' : '0');
+}
+
+// Restore saved preference, or respect OS preference
+const saved = localStorage.getItem('dm');
+const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+applyDark(saved !== null ? saved === '1' : prefersDark);
+
+dmBtn.addEventListener('click', () => applyDark(!html.classList.contains('dark')));
+
+// Listen for OS theme changes
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+  if (localStorage.getItem('dm') === null) applyDark(e.matches);
+});
+
+// ── COPY BUTTONS ───────────────────────────────────
+const COPY_ICON = `<svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"/><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"/></svg>`;
+const CHECK_ICON = `<svg viewBox="0 0 16 16"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"/></svg>`;
+
+document.querySelectorAll('pre').forEach(pre => {
+  // Extract plain text from code block (strip HTML tags)
+  const codeEl = pre.querySelector('code');
+  if (!codeEl) return;
+
+  const btn = document.createElement('button');
+  btn.className = 'copy-btn';
+  btn.innerHTML = COPY_ICON + '<span>Copy</span>';
+  btn.setAttribute('aria-label', 'Copy code');
+  pre.appendChild(btn);
+
+  btn.addEventListener('click', () => {
+    // Get plain text — strip all HTML tags
+    const text = codeEl.innerText
+      .split('\n')
+      .map(l => l.trimEnd())
+      .join('\n')
+      .trim();
+
+    navigator.clipboard.writeText(text).then(() => {
+      btn.innerHTML = CHECK_ICON + '<span>Copied!</span>';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.innerHTML = COPY_ICON + '<span>Copy</span>';
+        btn.classList.remove('copied');
+      }, 2000);
+    }).catch(() => {
+      // Fallback for older browsers
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;opacity:0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      btn.innerHTML = CHECK_ICON + '<span>Copied!</span>';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.innerHTML = COPY_ICON + '<span>Copy</span>';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  });
+});
+
+// ── PROGRESS BAR ───────────────────────────────────
+window.addEventListener('scroll', () => {
+  const el = document.documentElement;
+  const pct = (el.scrollTop / (el.scrollHeight - el.clientHeight)) * 100;
+  document.getElementById('pf').style.width = pct + '%';
+});
+
+// ── ACTIVE NAV TRACKING ────────────────────────────
+const sections = document.querySelectorAll('.doc-section, .hero');
+const navLinks = document.querySelectorAll('.nav a');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      const id = entry.target.id;
+      const active = document.querySelector(`.nav a[href="#${id}"]`);
+      if (active) active.classList.add('active');
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
