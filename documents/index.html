@@ -847,6 +847,7 @@ td code { font-size: 0.78rem; }
   <div class="nav-section-label">Getting Started</div>
   <a href="#overview" class="active"><span class="nav-dot"></span>Overview</a>
   <a href="#quickstart"><span class="nav-dot"></span>Quick Start</a>
+  <a href="#windows-setup"><span class="nav-dot"></span>Windows Setup</a>
   <a href="#files"><span class="nav-dot"></span>Project Files</a>
 
   <div class="nav-section-label">How It Works</div>
@@ -951,6 +952,181 @@ td code { font-size: 0.78rem; }
         <p>Open <code>eigenfaces_sklearn.html</code> right now — it contains the full interface loaded with simulated data so you can explore before running anything.</p>
       </div>
     </div>
+  </section>
+
+
+  <!-- ── WINDOWS SETUP ────────────────────────────────── -->
+  <section class="doc-section" id="windows-setup">
+    <div class="section-header">
+      <span class="section-number">W1</span>
+      <h2>Windows Setup</h2>
+    </div>
+
+    <p>
+      Detailed step-by-step guide for running the Eigenfaces pipeline on <strong>Windows using Git Bash</strong>.
+      The script downloads the AT&amp;T Olivetti dataset, runs real sklearn PCA, and generates the
+      self-contained HTML visualization — all from five simple commands.
+    </p>
+
+    <h3>Pipeline Overview</h3>
+    <p>sklearn runs on your machine, fetches the real AT&amp;T Olivetti dataset, computes PCA,
+      then bakes everything into a self-contained HTML file you open in any browser.</p>
+
+    <div class="pipeline">
+      <div class="pipe-box">
+        <div class="pipe-num">You run</div>
+        <div class="pipe-label">generate_eigenfaces.py</div>
+        <div class="pipe-code">Python script</div>
+      </div>
+      <div class="pipe-box">
+        <div class="pipe-num">Downloads</div>
+        <div class="pipe-label">Olivetti 400 faces</div>
+        <div class="pipe-code">figshare.com · ~5 MB</div>
+      </div>
+      <div class="pipe-box">
+        <div class="pipe-num">Runs real</div>
+        <div class="pipe-label">sklearn PCA</div>
+        <div class="pipe-code">PCA(n_components=50)</div>
+      </div>
+      <div class="pipe-box">
+        <div class="pipe-num">Injects into</div>
+        <div class="pipe-label">template.html</div>
+        <div class="pipe-code">base64 JSON payload</div>
+      </div>
+      <div class="pipe-box">
+        <div class="pipe-num">You open</div>
+        <div class="pipe-label">eigenfaces_olivetti.html</div>
+        <div class="pipe-code">no server needed</div>
+      </div>
+    </div>
+
+    <h3>Setup Steps — Git Bash on Windows</h3>
+
+    <div class="step-list">
+
+      <div class="step-item">
+        <div class="step-n">1</div>
+        <div class="step-body">
+          <div class="step-title">Check Python is installed</div>
+          <p class="step-desc">Open Git Bash and verify Python works. You need Python 3.7 or higher.</p>
+          <pre><span class="pre-label">Git Bash</span><code><span class="kw">python</span> --version
+<span class="cm"># Python 3.11.x</span>
+
+<span class="cm"># If that fails, try:</span>
+<span class="kw">python3</span> --version</code></pre>
+          <div class="callout callout-warn">
+            <span class="callout-icon">⚠</span>
+            <div class="callout-body">
+              <strong>Python not found?</strong>
+              <p>Download from <strong>python.org/downloads</strong> — check "Add Python to PATH" during install, then restart Git Bash.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-n">2</div>
+        <div class="step-body">
+          <div class="step-title">Navigate to the folder with your files</div>
+          <p class="step-desc">Git Bash uses Unix-style paths — drive letter becomes <code>/c/</code> instead of <code>C:\</code></p>
+          <pre><span class="pre-label">Git Bash</span><code><span class="cm"># Change to match where you saved the files:</span>
+<span class="kw">cd</span> <span class="st">/c/Users/YourName/Downloads/eigenfaces</span>
+
+<span class="cm"># Verify all files are there:</span>
+<span class="kw">ls</span>
+<span class="op">generate_eigenfaces.py  eigenfaces_template.html  eigenfaces_sklearn.html</span></code></pre>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-n">3</div>
+        <div class="step-body">
+          <div class="step-title">Install Python packages</div>
+          <p class="step-desc">Only needs to be done once. Pillow is optional — the script has a numpy fallback if it's missing.</p>
+          <pre><span class="pre-label">Git Bash</span><code><span class="kw">pip install</span> scikit-learn numpy pillow</code></pre>
+          <pre><span class="pre-label">If pip is not found</span><code><span class="kw">python -m pip install</span> scikit-learn numpy pillow</code></pre>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-n">4</div>
+        <div class="step-body">
+          <div class="step-title">Run the Python script</div>
+          <p class="step-desc">Downloads the real Olivetti dataset (~5 MB from figshare.com), runs sklearn PCA, and generates the HTML. Takes about 15–30 seconds total.</p>
+          <pre><span class="pre-label">Git Bash</span><code><span class="kw">python</span> generate_eigenfaces.py</code></pre>
+          <pre><span class="pre-label">Expected output</span><code><span class="op">[1/5]</span> Fetching Olivetti faces dataset via sklearn...
+      X.shape = (400, 4096)
+<span class="op">[2/5]</span> Running PCA(n_components=50).fit(X)...
+<span class="op">[3/5]</span> Downsampling 64×64 → 32×32...
+<span class="op">[4/5]</span> Encoding to base64...
+<span class="op">[5/5]</span> Building eigenfaces_olivetti.html...
+
+<span class="fn">✓  eigenfaces_olivetti.html  (2100 KB)</span></code></pre>
+          <div class="callout callout-tip">
+            <span class="callout-icon">✓</span>
+            <div class="callout-body">
+              <strong>Success!</strong>
+              <p><code>eigenfaces_olivetti.html</code> will appear in the same folder with all 400 real Olivetti faces embedded — no internet required to open it.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-n">5</div>
+        <div class="step-body">
+          <div class="step-title">Open the result in your browser</div>
+          <p class="step-desc">The generated HTML is fully self-contained — no server, no dependencies needed.</p>
+          <pre><span class="pre-label">Git Bash</span><code><span class="kw">start</span> eigenfaces_olivetti.html</code></pre>
+          <pre><span class="pre-label">Alternative</span><code><span class="cm"># Double-click the file in Windows Explorer</span>
+<span class="cm"># Or drag it into Chrome / Firefox</span></code></pre>
+        </div>
+      </div>
+
+    </div>
+
+    <h3>Troubleshooting</h3>
+
+    <div class="callout callout-warn">
+      <span class="callout-icon">⚠</span>
+      <div class="callout-body">
+        <strong>'python' is not recognized</strong>
+        <p>Try <code>python3</code> instead of <code>python</code>, or reinstall Python from python.org and check "Add Python to PATH".</p>
+      </div>
+    </div>
+
+    <div class="callout callout-warn">
+      <span class="callout-icon">⚠</span>
+      <div class="callout-body">
+        <strong>'pip' is not recognized</strong>
+        <p>Run <code>python -m pip install scikit-learn numpy pillow</code> instead.</p>
+      </div>
+    </div>
+
+    <div class="callout callout-info">
+      <span class="callout-icon">🌐</span>
+      <div class="callout-body">
+        <strong>Download error / URLError / figshare blocked</strong>
+        <p>Your network is blocking figshare.com. Try a different network, mobile hotspot, or VPN. The script only needs internet for step 4 (first run only — dataset is cached after that).</p>
+      </div>
+    </div>
+
+    <div class="callout callout-warn">
+      <span class="callout-icon">⚠</span>
+      <div class="callout-body">
+        <strong>eigenfaces_template.html not found</strong>
+        <p>The script must be in the same folder as the template. Run <code>ls</code> to confirm both files are present in the current directory.</p>
+      </div>
+    </div>
+
+    <div class="callout callout-tip">
+      <span class="callout-icon">💡</span>
+      <div class="callout-body">
+        <strong>Want to preview before running anything?</strong>
+        <p>Open <code>eigenfaces_sklearn.html</code> right now — it works with simulated data and shows the full interface with no setup required.</p>
+      </div>
+    </div>
+
   </section>
 
 

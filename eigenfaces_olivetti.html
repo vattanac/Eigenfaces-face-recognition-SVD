@@ -487,7 +487,8 @@ function drawFace(canvas, face, w, h, dw, dh) {
 }
 
 function drawBarChart(canvas, vals, selK, cSel, cOther) {
-  const W = canvas.parentElement.offsetWidth - 24 || 480;
+  const raw = canvas.parentElement.offsetWidth;
+  const W = raw > 0 ? raw - 24 : 480;
   canvas.width = W; canvas.height = 80;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, W, 80);
@@ -497,30 +498,31 @@ function drawBarChart(canvas, vals, selK, cSel, cOther) {
     ctx.fillStyle = i < selK ? cSel : cOther;
     ctx.fillRect(8 + i * bw, 80 - 6 - bh, bw - 1, bh);
   }
-  ctx.fillStyle = '#7788aa'; ctx.font = '700 8px IBM Plex Mono,monospace'; ctx.textAlign = 'center';
+  ctx.fillStyle = '#9ca3c0'; ctx.font = '700 8px IBM Plex Mono,monospace'; ctx.textAlign = 'center';
   for (let i = 4; i < n; i += 5) ctx.fillText(i + 1, 8 + (i + 0.5) * bw, 78);
 }
 
 function drawCumChart(canvas, cumVar, k) {
-  const W = canvas.parentElement.offsetWidth - 24 || 480;
+  const raw = canvas.parentElement.offsetWidth;
+  const W = raw > 0 ? raw - 24 : 480;
   canvas.width = W; canvas.height = 80;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, W, 80);
   const n = Math.min(cumVar.length, 50), bw = (W - 16) / n;
   // 90% dashed line
-  ctx.strokeStyle = 'rgba(255,204,0,.3)'; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
+  ctx.strokeStyle = 'rgba(245,158,11,.4)'; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
   const y90 = 80 - 6 - .9 * (80 - 16);
   ctx.beginPath(); ctx.moveTo(8, y90); ctx.lineTo(W - 8, y90); ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillStyle = '#ffcc00'; ctx.font = '700 8px IBM Plex Mono'; ctx.textAlign = 'left';
+  ctx.fillStyle = '#f59e0b'; ctx.font = '700 8px IBM Plex Mono'; ctx.textAlign = 'left';
   ctx.fillText('90%', W - 30, y90 - 3);
   // EVR area fill
-  ctx.fillStyle = 'rgba(77,159,255,.1)';
+  ctx.fillStyle = 'rgba(79,110,247,.1)';
   ctx.beginPath(); ctx.moveTo(8, 80 - 6);
   for (let i = 0; i < n; i++) { const x = 8 + (i + .5) * bw, y = 80 - 6 - cumVar[i] * (80 - 16); ctx.lineTo(x, y); }
   ctx.lineTo(8 + (n - .5) * bw, 80 - 6); ctx.closePath(); ctx.fill();
   // line
-  ctx.strokeStyle = '#4d9fff'; ctx.lineWidth = 2; ctx.beginPath();
+  ctx.strokeStyle = '#4f6ef7'; ctx.lineWidth = 2; ctx.beginPath();
   for (let i = 0; i < n; i++) {
     const x = 8 + (i + .5) * bw, y = 80 - 6 - cumVar[i] * (80 - 16);
     i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
@@ -529,11 +531,11 @@ function drawCumChart(canvas, cumVar, k) {
   // k dot
   if (k > 0 && k <= n) {
     const x = 8 + (k - .5) * bw, y = 80 - 6 - cumVar[k-1] * (80 - 16);
-    ctx.fillStyle = '#00ffcc'; ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#00ffcc'; ctx.font = '700 9px IBM Plex Mono'; ctx.textAlign = 'left';
+    ctx.fillStyle = '#4f6ef7'; ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#1a1d2e'; ctx.font = '700 9px IBM Plex Mono'; ctx.textAlign = 'left';
     ctx.fillText((cumVar[k-1] * 100).toFixed(1) + '%', x + 8, y + 4);
   }
-  ctx.fillStyle = '#7788aa'; ctx.font = '700 8px IBM Plex Mono'; ctx.textAlign = 'center';
+  ctx.fillStyle = '#9ca3c0'; ctx.font = '700 8px IBM Plex Mono'; ctx.textAlign = 'center';
   for (let i = 4; i < n; i += 5) ctx.fillText(i + 1, 8 + (i + .5) * bw, 78);
 }
 
@@ -588,7 +590,7 @@ function renderAll() {
 
   // ── Mean face + SV chart
   drawFace(document.getElementById('meanC'), MEAN_FACE, FW, FH, 96, 96);
-  drawBarChart(document.getElementById('svC'), SING_V, k, 'rgba(0,255,204,.85)', 'rgba(77,159,255,.25)');
+  drawBarChart(document.getElementById('svC'), SING_V, k, 'rgba(79,110,247,.85)', 'rgba(79,110,247,.2)');
 
   // ── Cum chart + eigenfaces
   drawCumChart(document.getElementById('cumC'), CUM_EVR, k);
@@ -713,6 +715,16 @@ function runRecognize() {
 function switchPanel(idx) {
   document.querySelectorAll('.ps').forEach((s, i) => s.classList.toggle('on', i === idx));
   document.querySelectorAll('.panel').forEach((p, i) => p.classList.toggle('on', i === idx));
+  // Redraw canvas charts after the panel becomes visible (offsetWidth is now valid)
+  if (idx === 1 || idx === 2) {
+    requestAnimationFrame(() => {
+      const k = +document.getElementById('kS').value;
+      const svC = document.getElementById('svC');
+      if (svC) drawBarChart(svC, SING_V, k, 'rgba(79,110,247,.85)', 'rgba(79,110,247,.2)');
+      const cumC = document.getElementById('cumC');
+      if (cumC) drawCumChart(cumC, CUM_EVR, k);
+    });
+  }
 }
 document.querySelectorAll('.ps').forEach((s, i) => s.addEventListener('click', () => switchPanel(i)));
 
